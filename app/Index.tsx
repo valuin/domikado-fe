@@ -58,6 +58,7 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-dashboard">
       <Header 
+        
         selectedIndex={selectedIndex}
         onIndexChange={setSelectedIndex}
       />
