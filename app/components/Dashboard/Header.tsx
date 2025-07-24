@@ -1,166 +1,114 @@
 import { useState } from "react";
 import { Button } from "@/app/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/app/components/ui/select";
-import { GraduationCap, Menu, User } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/app/components/ui/sheet";
+import { Menu, BarChart3, Users, Building2, Coins } from "lucide-react";
 
 interface HeaderProps {
   selectedIndex: string;
   onIndexChange: (index: string) => void;
 }
 
-const educationIndices = [
-  { value: "student-performance", label: "Student Performance Index" },
-  { value: "budget-allocation", label: "Budget Allocation Index" },
-  { value: "infrastructure", label: "Infrastructure Index" },
-  { value: "educator-workforce", label: "Educator Workforce Index" },
-];
-
 export const Header = ({ selectedIndex, onIndexChange }: HeaderProps) => {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const navigationItems = [
+    {
+      id: "student-performance",
+      label: "Student Performance",
+      description: "Academic achievement & learning outcomes",
+      icon: BarChart3,
+    },
+    {
+      id: "educator-workforce",
+      label: "Teaching Staff",
+      description: "Teacher quality & distribution",
+      icon: Users,
+    },
+    {
+      id: "infrastructure",
+      label: "Infrastructure",
+      description: "Buildings & digital facilities",
+      icon: Building2,
+    },
+    {
+      id: "budget-allocation",
+      label: "Budget Allocation",
+      description: "Financial resource distribution",
+      icon: Coins,
+    },
+  ];
 
   return (
-    <header className="bg-gradient-to-r from-blue-800/90 to-blue-500 shadow-card border-b border-border sticky top-0 z-40">
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo and Title */}
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-2">
-              <GraduationCap className="h-8 w-8 text-primary-foreground" />
-              <div>
-                <h1 className="text-xl font-bold text-primary-foreground">
-                  National Education Dashboard
-                </h1>
-                <p className="text-xs text-primary-foreground/80">
-                  Republic of Indonesia
-                </p>
-              </div>
+        <div className="flex justify-between items-center py-4">
+          {/* Logo */}
+          <div className="flex items-center space-x-3">
+            <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
+              <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
+            <span className="text-xl font-bold text-foreground">
+              EduDashboard
+            </span>
           </div>
 
-          {/* Main Navigation - Desktop */}
-          <nav className="hidden md:flex items-center space-x-8">
-            <a
-              href="#"
-              className="text-primary-foreground/90 hover:text-primary-foreground font-medium transition-colors"
-            >
-              Home
-            </a>
-            <a
-              href="#"
-              className="text-primary-foreground/90 hover:text-primary-foreground font-medium transition-colors"
-            >
-              Data
-            </a>
-            <a
-              href="#"
-              className="text-primary-foreground/90 hover:text-primary-foreground font-medium transition-colors"
-            >
-              Simulation
-            </a>
-            <a
-              href="#"
-              className="text-primary-foreground/90 hover:text-primary-foreground font-medium transition-colors"
-            >
-              About
-            </a>
+          {/* Desktop Navigation */}
+          <nav className="hidden md:flex space-x-1">
+            {navigationItems.map((item) => (
+              <Button
+                key={item.id}
+                variant={selectedIndex === item.id ? "default" : "ghost"}
+                onClick={() => onIndexChange(item.id)}
+                className="flex flex-col items-start p-3 h-auto min-w-[140px]"
+              >
+                <div className="flex items-center space-x-2 mb-1">
+                  <item.icon className="h-4 w-4" />
+                  <span className="font-medium text-sm">{item.label}</span>
+                </div>
+                <span className="text-xs opacity-70 text-left">
+                  {item.description}
+                </span>
+              </Button>
+            ))}
           </nav>
 
-          {/* Index Selector and User Menu */}
-          <div className="flex items-center space-x-4">
-            {/* Index Selector */}
-            <div className="hidden lg:block">
-              <Select value={selectedIndex} onValueChange={onIndexChange}>
-                <SelectTrigger className="w-64 bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
-                  <SelectValue placeholder="Select education index" />
-                </SelectTrigger>
-                <SelectContent>
-                  {educationIndices.map((index) => (
-                    <SelectItem key={index.value} value={index.value}>
-                      {index.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* User Menu */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-primary-foreground hover:bg-primary-foreground/10"
-            >
-              <User className="h-4 w-4 mr-2" />
-              Login
-            </Button>
-
-            {/* Mobile Menu Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              className="md:hidden text-primary-foreground hover:bg-primary-foreground/10"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
+          {/* Mobile Navigation */}
+          <Sheet open={isOpen} onOpenChange={setIsOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="icon" className="md:hidden">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-80">
+              <div className="flex flex-col space-y-4 mt-6">
+                <h2 className="text-lg font-semibold text-foreground mb-4">
+                  Education Indices
+                </h2>
+                {navigationItems.map((item) => (
+                  <Button
+                    key={item.id}
+                    variant={selectedIndex === item.id ? "default" : "ghost"}
+                    onClick={() => {
+                      onIndexChange(item.id);
+                      setIsOpen(false);
+                    }}
+                    className="flex items-start p-4 h-auto justify-start"
+                  >
+                    <div className="flex flex-col items-start space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <item.icon className="h-4 w-4" />
+                        <span className="font-medium">{item.label}</span>
+                      </div>
+                      <span className="text-xs opacity-70 text-left">
+                        {item.description}
+                      </span>
+                    </div>
+                  </Button>
+                ))}
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
-
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden border-t border-primary-foreground/20 py-4">
-            <div className="space-y-4">
-              {/* Mobile Index Selector */}
-              <div className="lg:hidden">
-                <Select value={selectedIndex} onValueChange={onIndexChange}>
-                  <SelectTrigger className="w-full bg-primary-foreground/10 border-primary-foreground/20 text-primary-foreground">
-                    <SelectValue placeholder="Select education index" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {educationIndices.map((index) => (
-                      <SelectItem key={index.value} value={index.value}>
-                        {index.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Mobile Navigation Links */}
-              <div className="flex flex-col space-y-2">
-                <a
-                  href="#"
-                  className="text-primary-foreground/90 hover:text-primary-foreground font-medium py-2"
-                >
-                  Home
-                </a>
-                <a
-                  href="#"
-                  className="text-primary-foreground/90 hover:text-primary-foreground font-medium py-2"
-                >
-                  Data
-                </a>
-                <a
-                  href="#"
-                  className="text-primary-foreground/90 hover:text-primary-foreground font-medium py-2"
-                >
-                  Simulation
-                </a>
-                <a
-                  href="#"
-                  className="text-primary-foreground/90 hover:text-primary-foreground font-medium py-2"
-                >
-                  About
-                </a>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </header>
   );

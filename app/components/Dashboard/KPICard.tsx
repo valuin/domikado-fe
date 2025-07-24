@@ -4,7 +4,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/app/components/ui/card";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Progress } from "@/app/components/ui/progress";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 
 interface KPICardProps {
   title: string;
@@ -13,22 +14,8 @@ interface KPICardProps {
   trend: "up" | "down" | "stable";
   trendValue: number;
   description: string;
-  color: "blue" | "green" | "orange" | "red";
+  color: "green" | "blue" | "red" | "yellow";
 }
-
-const colorClasses = {
-  blue: "from-data-blue/10 to-primary/5 border-data-blue/20",
-  green: "from-data-green/10 to-accent/5 border-data-green/20",
-  orange: "from-data-orange/10 to-warning/5 border-data-orange/20",
-  red: "from-data-red/10 to-destructive/5 border-data-red/20",
-};
-
-const scoreColors = {
-  blue: "text-data-blue",
-  green: "text-data-green",
-  orange: "text-data-orange",
-  red: "text-data-red",
-};
 
 export const KPICard = ({
   title,
@@ -41,61 +28,80 @@ export const KPICard = ({
 }: KPICardProps) => {
   const percentage = (score / maxScore) * 100;
 
+  const getTrendIcon = () => {
+    switch (trend) {
+      case "up":
+        return <TrendingUp className="h-4 w-4 text-success" />;
+      case "down":
+        return <TrendingDown className="h-4 w-4 text-destructive" />;
+      case "stable":
+        return <Minus className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
+
+  const getTrendColor = () => {
+    switch (trend) {
+      case "up":
+        return "text-success";
+      case "down":
+        return "text-destructive";
+      case "stable":
+        return "text-muted-foreground";
+    }
+  };
+
+  const getProgressColor = () => {
+    switch (color) {
+      case "green":
+        return "bg-success";
+      case "blue":
+        return "bg-primary";
+      case "red":
+        return "bg-destructive";
+      case "yellow":
+        return "bg-warning";
+      default:
+        return "bg-primary";
+    }
+  };
+
   return (
-    <Card
-      className={`bg-gradient-to-br ${colorClasses[color]} shadow-card hover:shadow-elevated transition-all duration-300 border`}
-    >
+    <Card className="shadow-card">
       <CardHeader className="pb-3">
         <CardTitle className="text-sm font-medium text-muted-foreground">
           {title}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="flex items-end justify-between">
-          <div>
-            <div className={`text-3xl font-bold ${scoreColors[color]}`}>
-              {score}
-              <span className="text-lg text-muted-foreground">/{maxScore}</span>
+      <CardContent>
+        <div className="space-y-3">
+          <div className="flex items-baseline space-x-2">
+            <span className="text-2xl font-bold text-foreground">{score}</span>
+            <span className="text-sm text-muted-foreground">/ {maxScore}</span>
+          </div>
+
+          <Progress value={percentage} className="h-2" />
+
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">{description}</span>
+            <div className={`flex items-center space-x-1 ${getTrendColor()}`}>
+              {getTrendIcon()}
+              <span className="text-xs font-medium">
+                {trend === "stable" ? "±" : trend === "up" ? "+" : "-"}
+                {trendValue}%
+              </span>
             </div>
           </div>
-          <div className="flex items-center space-x-1">
-            {trend === "up" && <TrendingUp className="h-4 w-4 text-success" />}
-            {trend === "down" && (
-              <TrendingDown className="h-4 w-4 text-destructive" />
-            )}
-            <span
-              className={`text-sm font-medium ${
-                trend === "up"
-                  ? "text-success"
-                  : trend === "down"
-                  ? "text-destructive"
-                  : "text-muted-foreground"
-              }`}
-            >
-              {trend !== "stable"
-                ? `${trendValue > 0 ? "+" : ""}${trendValue}%`
-                : "—"}
-            </span>
-          </div>
-        </div>
 
-        {/* Progress bar */}
-        <div className="space-y-2">
-          <div className="w-full bg-muted/50 rounded-full h-2">
-            <div
-              className={`h-2 rounded-full transition-all duration-500 ${
-                color === "blue"
-                  ? "bg-data-blue"
-                  : color === "green"
-                  ? "bg-data-green"
-                  : color === "orange"
-                  ? "bg-data-orange"
-                  : "bg-data-red"
-              }`}
-              style={{ width: `${percentage}%` }}
-            />
+          <div className="pt-2">
+            <div className="text-xs text-muted-foreground">Progress Bar</div>
+            <div className="flex items-center justify-between text-xs">
+              <span>0</span>
+              <span className="font-medium text-primary">
+                {percentage.toFixed(1)}%
+              </span>
+              <span>{maxScore}</span>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
       </CardContent>
     </Card>

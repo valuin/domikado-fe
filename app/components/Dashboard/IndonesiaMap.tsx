@@ -1,6 +1,19 @@
 import { useState } from "react";
 import { Card } from "@/app/components/ui/card";
+import dynamic from "next/dynamic";
 
+// Dynamic import to prevent SSR issues with Leaflet
+const MapComponent = dynamic(() => import("../mapComponent"), {
+  ssr: false,
+  loading: () => (
+    <div className="h-96 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+        <p className="text-gray-500">Loading map...</p>
+      </div>
+    </div>
+  ),
+});
 
 interface Province {
   id: string;
@@ -54,7 +67,7 @@ export const IndonesiaMap = ({
   };
 
   return (
-    <Card className="bg-gradient-dashboard shadow-map overflow-hidden">
+    <Card className=" shadow-map overflow-hidden">
       <div className="relative p-6">
         <div className="text-center mb-4">
           <h2 className="text-xl font-semibold text-foreground">
@@ -70,28 +83,9 @@ export const IndonesiaMap = ({
           onMouseMove={handleMouseMove}
         >
           {/* Map background */}
-          {/* <img
-            src={indonesiaMap}
-            alt="Indonesia Map"
-            className="w-full h-auto rounded-lg shadow-sm"
-          /> */}
+          <MapComponent />
 
           {/* Province markers */}
-          {provinces.map((province) => (
-            <button
-              key={province.id}
-              className={`absolute w-4 h-4 rounded-full border-2 border-white shadow-lg transform -translate-x-1/2 -translate-y-1/2 hover:scale-150 transition-all duration-200 cursor-pointer ${getScoreColor(
-                province.score
-              )}`}
-              style={{
-                left: `${province.x}%`,
-                top: `${province.y}%`,
-              }}
-              onMouseEnter={() => setHoveredProvince(province)}
-              onMouseLeave={() => setHoveredProvince(null)}
-              onClick={() => onProvinceClick?.(province)}
-            />
-          ))}
         </div>
 
         {/* Legend */}

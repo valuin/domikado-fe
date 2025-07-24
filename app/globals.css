@@ -1,7 +1,23 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "leaflet/dist/leaflet.css";
 
 @custom-variant dark (&:is(.dark *));
+
+/* Custom Leaflet tooltip styles */
+.custom-tooltip {
+  background: rgba(0, 0, 0, 0.8) !important;
+  border: none !important;
+  border-radius: 6px !important;
+  color: white !important;
+  font-size: 12px !important;
+  padding: 8px 12px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.custom-tooltip::before {
+  border-top-color: rgba(0, 0, 0, 0.8) !important;
+}
 
 /* Tailwind CSS custom properties mapped from :root */
 @theme inline {
@@ -96,22 +112,34 @@
   --ring: 220 91% 45%;
 
   /* Indonesian-inspired gradients */
-  --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
-  --gradient-success: linear-gradient(135deg, hsl(var(--success)), hsl(var(--accent-glow)));
-  --gradient-dashboard: linear-gradient(180deg, hsl(var(--background)), hsl(var(--muted)));
-  
+  --gradient-primary: linear-gradient(
+    135deg,
+    hsl(var(--primary)),
+    hsl(var(--primary-glow))
+  );
+  --gradient-success: linear-gradient(
+    135deg,
+    hsl(var(--success)),
+    hsl(var(--accent-glow))
+  );
+  --gradient-dashboard: linear-gradient(
+    180deg,
+    hsl(var(--background)),
+    hsl(var(--muted))
+  );
+
   /* Data visualization colors */
   --data-red: 0 72% 51%;
   --data-orange: 25 95% 53%;
   --data-yellow: 45 93% 47%;
   --data-green: 142 69% 58%;
   --data-blue: 220 91% 45%;
-  
+
   /* Chart shadows and effects */
   --shadow-card: 0 4px 20px -2px hsl(var(--primary) / 0.1);
   --shadow-map: 0 10px 40px -5px hsl(var(--primary) / 0.15);
   --shadow-elevated: 0 20px 60px -10px hsl(var(--primary) / 0.2);
-  
+
   /* Animation variables */
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-bounce: all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
