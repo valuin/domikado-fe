@@ -4,6 +4,7 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --color-blue: hsl(var(--blue));
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
@@ -41,6 +42,7 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --boxShadow-elevated: 0 20px 60px -10px hsl(var(--primary) / 0.2);
 }
 
 :root {
@@ -76,6 +78,11 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --data-red: 0 72% 51%;
+  --data-orange: 25 95% 53%;
+  --data-yellow: 45 93% 47%;
+  --data-green: 142 69% 58%;
+  --data-blue: 220 91% 45%;
 }
 
 .dark {
@@ -110,6 +117,16 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+  --data-red: 0 72% 51%;
+  --data-orange: 25 95% 53%;
+  --data-yellow: 45 93% 47%;
+  --data-green: 142 69% 58%;
+  --data-blue: 220 91% 45%;
+  
+}
+
+@theme {
+  --colors-data-blue: oklch(220 91% 45%);
 }
 
 @layer base {
