@@ -162,6 +162,7 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
         </div>
       </div>
       <TeacherChart />
+
       <SchoolsBreakdown />
     </div>
   );

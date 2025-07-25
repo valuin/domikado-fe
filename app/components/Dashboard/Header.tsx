@@ -18,9 +18,7 @@ export const Header = () => {
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">
-              EduDashboard
-            </span>
+            <span className="text-xl font-bold text-foreground">Edquity</span>
           </div>
         </div>
       </div>

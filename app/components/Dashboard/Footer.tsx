@@ -61,7 +61,7 @@ export const Footer = () => {
                 <p>Education Data Analytics Team</p>
                 <p>Ministry of Education, Culture, Research, and Technology</p>
                 <p className="text-primary hover:text-primary/80 cursor-pointer">
-                  info@edudashboard.go.id
+                  info@Edquity.go.id
                 </p>
                 <p>+62 21 3456 7890</p>
               </div>

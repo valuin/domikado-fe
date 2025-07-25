@@ -234,7 +234,7 @@ export const SchoolsBreakdown = () => {
           School Breakdown by Type
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Detailed distribution of {totalSchools.toLocaleString()} schools
+          Detailed distribution of {totalSchools.toLocaleString('en-US')} schools
           across Indonesia (2024)
         </p>
       </CardHeader>
@@ -251,7 +251,7 @@ export const SchoolsBreakdown = () => {
            </div>
            <div className="text-right">
              <div className="text-xl font-bold text-primary">
-               {totalSchools.toLocaleString()}
+               {totalSchools.toLocaleString('en-US')}
              </div>
              <div className="text-sm text-muted-foreground">
                Across all education levels
