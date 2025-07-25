@@ -11,6 +11,18 @@ import ProvinceHeader from "@/app/components/Province/ProvinceHeader";
 import CurrentSituationSection from "@/app/components/Province/CurrentSituationSection";
 import InterventionRecommendationsSection from "@/app/components/Province/InterventionRecommendationsSection";
 import { Users, Heart, Building } from "lucide-react";
+import { useProvince } from "@/app/hooks/use-province";
+
+const providedData = [
+  {
+    id: "0b9fb40b-0533-4092-bc06-b4e8ce7c367e",
+    name: "Jakarta",
+  },
+  {
+    id: "5afad633-fc10-4382-acef-13aaaa5f4c26",
+    name: "Papua",
+  },
+];
 
 const ProvincePage = () => {
   const params = useParams();
@@ -22,96 +34,51 @@ const ProvincePage = () => {
       ?.replace(/-/g, " ")
       .replace(/\b\w/g, (l) => l.toUpperCase()) || "Jawa Barat";
 
-      console.log(provinceName)
-  
-  const provinceData = {
-    name: provinceName,
-    population: "48.2 juta",
-    totalStudents: "12.1 juta",
-    totalTeachers: "485.000",
-    totalSchools: "45.230",
-    educationBudget: "Rp 12.3T",
-    gapScore: 72,
-    ranking: 5,
-    literacy: 96.4,
-    enrollment: 98.7,
-    budgetAllocation: [
-      { name: "Gaji Guru", value: 45.2, color: "#3b82f6" },
-      { name: "Infrastruktur", value: 28.3, color: "#10b981" },
-      { name: "Program Bantuan", value: 16.8, color: "#f59e0b" },
-      { name: "Operasional", value: 9.7, color: "#ef4444" },
-    ],
-    estimatedBudget: "Rp 2.1T",
-  };
+  // Find matching province in providedData
+  const matchingProvince = providedData.find(
+    (province) => province.name.toLowerCase() === provinceName.toLowerCase()
+  );
 
-  const currentSituationData = {
-    kpiMetrics: [
-      {
-        title: "Angka Partisipasi Sekolah",
-        value: "75%",
-        target: "100%",
-        status: "warning",
-        trend: "+0.3%",
-      },
-      {
-        title: "Tingkat Penyelesaian Pendidikan",
-        value: "78%",
-        target: "100%",
-        status: "good",
-        trend: "+0.3%",
-      },
-      {
-        title: "Tingkat Literasi",
-        value: "96.4%",
-        target: "98%",
-        status: "good",
-        trend: "+1.2%",
-      },
-      {
-        title: "Indeks Pembangunan Manusia",
-        value: "73.4%",
-        target: "100%",
-        status: "good",
-        trend: "+0.8%",
-      },
-    ],
-    schoolBreakdown: [
-      {
-        name: "SD/MI",
-        count: 28450,
-        teachers: 285000,
-        students: 4800000,
-        ratio: 16.8,
-      },
-      {
-        name: "SMP/MTs",
-        count: 12230,
-        teachers: 122000,
-        students: 1680000,
-        ratio: 13.8,
-      },
-      {
-        name: "SMA/SMK",
-        count: 4550,
-        teachers: 78000,
-        students: 980000,
-        ratio: 12.6,
-      },
-    ],
+  // Fetch data if province exists in providedData, otherwise use null
+  const { data, isLoading } = useProvince({
+    provinceId: matchingProvince?.id,
+  });
+
+  console.log("Province data:", data);
+  console.log("Matching province:", matchingProvince);
+
+  // Use real data if available, otherwise fallback to placeholder data
+  const provinceData = {
+    name: data?.provinces?.name || provinceName,
+    population: "48.2 juta", // Placeholder - not in API
+    totalStudents: data?.total?.students?.toLocaleString() || "12.1 juta",
+    totalTeachers: data?.total?.teachers?.toLocaleString() || "485.000",
+    totalSchools: data?.total?.schools?.toLocaleString() || "45.230",
+    educationBudget: data?.funding
+      ? `Rp ${(data.funding / 1e12).toFixed(1)}T`
+      : "Rp 12.3T",
+    gapScore: (data as any)?.gap_score || 72,
+    ranking: 5, // Placeholder - not in API
+    literacy: data?.social?.literacy_rate || 96.4,
+    enrollment: data?.social?.school_participation_rate || 98.7,
     budgetAllocation: [
       { name: "Gaji Guru", value: 45.2, color: "#3b82f6" },
       { name: "Infrastruktur", value: 28.3, color: "#10b981" },
       { name: "Program Bantuan", value: 16.8, color: "#f59e0b" },
       { name: "Operasional", value: 9.7, color: "#ef4444" },
     ],
+    estimatedBudget: "Rp 2.1T", // Placeholder - calculated recommendation
   };
 
   const interventionData = {
-    expectedGapScore: 72,
+    expectedGapScore: (data as any)?.gap_score
+      ? Math.min(100, (data as any).gap_score + 10)
+      : 72,
     headline: {
       title: "Rekomendasi Strategis untuk Peningkatan Kualitas Pendidikan",
-      description:
-        "Berdasarkan analisis komprehensif, diperlukan intervensi terfokus pada 3 aspek utama dengan realokasi anggaran sebesar Rp 2.1T untuk mencapai standar nasional dalam 3 tahun ke depan.",
+      description: `Berdasarkan analisis komprehensif ${
+        data?.provinces?.name || provinceName
+      }, diperlukan intervensi terfokus pada 3 aspek utama dengan realokasi anggaran sebesar Rp 2.1T untuk mencapai standar nasional dalam 3 tahun ke depan.`,
     },
     budgetRecommendation: [
       {
@@ -191,6 +158,20 @@ const ProvincePage = () => {
     ],
   };
 
+  // Show loading state while fetching data
+  if (isLoading && matchingProvince) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">
+            Loading {provinceName} data...
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen">
       <ProvinceHeader
@@ -215,9 +196,10 @@ const ProvincePage = () => {
           {/* Tab 1: Current Situations */}
           <TabsContent value="current" className="space-y-8">
             <CurrentSituationSection
-                interventionData={interventionData}
-                estimatedBudget={provinceData.estimatedBudget}  
-              />
+              interventionData={interventionData}
+              estimatedBudget={provinceData.estimatedBudget}
+              provinceData={data}
+            />
           </TabsContent>
 
           {/* Tab 2: Intervention Recommendations */}
@@ -226,6 +208,7 @@ const ProvincePage = () => {
               interventionData={interventionData}
               estimatedBudget={provinceData.estimatedBudget}
               provinceName={provinceName}
+              provinceData={data}
             />
           </TabsContent>
         </Tabs>

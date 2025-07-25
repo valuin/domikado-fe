@@ -52,87 +52,227 @@ type HierarchyData = {
   }[];
 };
 
-// This would ideally come from props, but for now using static data based on the API response
-const schoolData: SchoolTopic[] = [
-  {
-    name: "Elementary Schools (SD)",
-    totalValue: 151335,
-    totalPercentage: 66.5,
-    color: "hsl(var(--data-blue))",
-    teachers: 1654764,
-    students: 24081832,
-    ratio: 15.2,
-    breakdown: [
+// Generate school data based on province data or use defaults
+const generateSchoolData = (provinceData?: any): SchoolTopic[] => {
+  if (!provinceData) {
+    return [
       {
-        name: "Public Elementary",
-        value: 129284,
-        description: "Government-run elementary schools",
+        name: "Elementary Schools (SD)",
+        totalValue: 151335,
+        totalPercentage: 66.5,
+        color: "hsl(var(--data-blue))",
+        teachers: 1654764,
+        students: 24081832,
+        ratio: 15.2,
+        breakdown: [
+          {
+            name: "Public Elementary",
+            value: 129284,
+            description: "Government-run elementary schools",
+          },
+          {
+            name: "Private Elementary",
+            value: 19750,
+            description: "Private elementary schools",
+          },
+          {
+            name: "Special Education",
+            value: 2301,
+            description: "Schools for children with special needs",
+          },
+        ],
       },
       {
-        name: "Private Elementary",
-        value: 19750,
-        description: "Private elementary schools",
+        name: "Junior High Schools (SMP)",
+        totalValue: 45298,
+        totalPercentage: 19.9,
+        color: "hsl(var(--data-green))",
+        teachers: 729780,
+        students: 10151103,
+        ratio: 13.9,
+        breakdown: [
+          {
+            name: "Public Junior High",
+            value: 24076,
+            description: "Government-run junior high schools",
+          },
+          {
+            name: "Private Junior High",
+            value: 19022,
+            description: "Private junior high schools",
+          },
+          {
+            name: "Special Education",
+            value: 2200,
+            description: "Schools for children with special needs",
+          },
+        ],
       },
       {
-        name: "Special Education",
-        value: 2301,
-        description: "Schools for children with special needs",
+        name: "Senior High Schools (SMA)",
+        totalValue: 30957,
+        totalPercentage: 13.6,
+        color: "hsl(var(--data-orange))",
+        teachers: 701781,
+        students: 10481481,
+        ratio: 14.9,
+        breakdown: [
+          {
+            name: "Public Senior High",
+            value: 10805,
+            description: "Government-run senior high schools",
+          },
+          {
+            name: "Private Senior High",
+            value: 18135,
+            description: "Private senior high schools",
+          },
+          {
+            name: "Special Education",
+            value: 2017,
+            description: "Schools for children with special needs",
+          },
+        ],
       },
-    ],
-  },
-  {
-    name: "Junior High Schools (SMP)",
-    totalValue: 45298,
-    totalPercentage: 19.9,
-    color: "hsl(var(--data-green))",
-    teachers: 729780,
-    students: 10151103,
-    ratio: 13.9,
-    breakdown: [
-      {
-        name: "Public Junior High",
-        value: 24076,
-        description: "Government-run junior high schools",
-      },
-      {
-        name: "Private Junior High",
-        value: 19022,
-        description: "Private junior high schools",
-      },
-      {
-        name: "Special Education",
-        value: 2200,
-        description: "Schools for children with special needs",
-      },
-    ],
-  },
-  {
-    name: "Senior High Schools (SMA)",
-    totalValue: 30957,
-    totalPercentage: 13.6,
-    color: "hsl(var(--data-orange))",
-    teachers: 701781,
-    students: 10481481,
-    ratio: 14.9,
-    breakdown: [
-      {
-        name: "Public Senior High",
-        value: 10805,
-        description: "Government-run senior high schools",
-      },
-      {
-        name: "Private Senior High",
-        value: 18135,
-        description: "Private senior high schools",
-      },
-      {
-        name: "Special Education",
-        value: 2017,
-        description: "Schools for children with special needs",
-      },
-    ],
-  },
-];
+    ];
+  }
+
+  // Use real province data
+  const totalSchools = provinceData.total.schools;
+  const elementarySchools = provinceData.infrastructure.schools.elementary;
+  const juniorHighSchools = provinceData.infrastructure.schools.junior_high;
+  const seniorHighSchools = provinceData.infrastructure.schools.senior_high;
+  const higherEducationSchools =
+    provinceData.infrastructure.schools.higher_education;
+
+  const elementaryTeachers = provinceData.workers.teachers.elementary.total;
+  const juniorHighTeachers = provinceData.workers.teachers.junior_high.total;
+  const seniorHighTeachers = provinceData.workers.teachers.senior_high.total;
+  const higherEducationTeachers =
+    provinceData.workers.teachers.higher_education.total;
+
+  const elementaryStudents =
+    provinceData.infrastructure.students.elementary.total;
+  const juniorHighStudents =
+    provinceData.infrastructure.students.junior_high.total;
+  const seniorHighStudents =
+    provinceData.infrastructure.students.senior_high.total;
+  const higherEducationStudents =
+    provinceData.infrastructure.students.higher_education.total;
+
+  return [
+    {
+      name: "Elementary Schools (SD)",
+      totalValue: elementarySchools.total,
+      totalPercentage: (elementarySchools.total / totalSchools) * 100,
+      color: "hsl(var(--data-blue))",
+      teachers: elementaryTeachers,
+      students: elementaryStudents,
+      ratio: elementaryStudents / elementaryTeachers,
+      breakdown: [
+        {
+          name: "Public Elementary",
+          value: elementarySchools.public,
+          description: "Government-run elementary schools",
+        },
+        {
+          name: "Private Elementary",
+          value: elementarySchools.private,
+          description: "Private elementary schools",
+        },
+        {
+          name: "Special Education",
+          value: elementarySchools.special_needs,
+          description: "Schools for children with special needs",
+        },
+      ],
+    },
+    {
+      name: "Junior High Schools (SMP)",
+      totalValue: juniorHighSchools.total,
+      totalPercentage: (juniorHighSchools.total / totalSchools) * 100,
+      color: "hsl(var(--data-green))",
+      teachers: juniorHighTeachers,
+      students: juniorHighStudents,
+      ratio: juniorHighStudents / juniorHighTeachers,
+      breakdown: [
+        {
+          name: "Public Junior High",
+          value: juniorHighSchools.public,
+          description: "Government-run junior high schools",
+        },
+        {
+          name: "Private Junior High",
+          value: juniorHighSchools.private,
+          description: "Private junior high schools",
+        },
+        {
+          name: "Special Education",
+          value: juniorHighSchools.special_needs,
+          description: "Schools for children with special needs",
+        },
+      ],
+    },
+    {
+      name: "Senior High Schools (SMA)",
+      totalValue: seniorHighSchools.total,
+      totalPercentage: (seniorHighSchools.total / totalSchools) * 100,
+      color: "hsl(var(--data-orange))",
+      teachers: seniorHighTeachers,
+      students: seniorHighStudents,
+      ratio: seniorHighStudents / seniorHighTeachers,
+      breakdown: [
+        {
+          name: "Public Senior High",
+          value: seniorHighSchools.public,
+          description: "Government-run senior high schools",
+        },
+        {
+          name: "Private Senior High",
+          value: seniorHighSchools.private,
+          description: "Private senior high schools",
+        },
+        {
+          name: "Special Education",
+          value: seniorHighSchools.special_needs,
+          description: "Schools for children with special needs",
+        },
+      ],
+    },
+    // Add higher education if it exists
+    ...(higherEducationSchools.total > 0
+      ? [
+          {
+            name: "Higher Education",
+            totalValue: higherEducationSchools.total,
+            totalPercentage:
+              (higherEducationSchools.total / totalSchools) * 100,
+            color: "hsl(var(--data-yellow))",
+            teachers: higherEducationTeachers,
+            students: higherEducationStudents,
+            ratio: higherEducationStudents / higherEducationTeachers,
+            breakdown: [
+              {
+                name: "Public Universities",
+                value: higherEducationSchools.public,
+                description: "Government-run universities",
+              },
+              {
+                name: "Private Universities",
+                value: higherEducationSchools.private,
+                description: "Private universities",
+              },
+              {
+                name: "Official Institutions",
+                value: higherEducationSchools.official,
+                description: "Official educational institutions",
+              },
+            ],
+          },
+        ]
+      : []),
+  ];
+};
 
 // Using real data from API: 227,590 total schools
 const totalSchools = 227590;
@@ -219,7 +359,14 @@ export function TreemapChart({ data: rawData }: TreemapChartProps) {
   );
 }
 
-export const SchoolsBreakdown = () => {
+interface SchoolsBreakdownProps {
+  provinceData?: any;
+}
+
+export const SchoolsBreakdown = ({ provinceData }: SchoolsBreakdownProps) => {
+  const schoolData = generateSchoolData(provinceData);
+  const totalSchools = provinceData?.total?.schools || 227590;
+
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -229,7 +376,7 @@ export const SchoolsBreakdown = () => {
         </CardTitle>
         <p className="text-sm text-muted-foreground">
           Detailed distribution of {totalSchools.toLocaleString("en-US")}{" "}
-          schools across Indonesia (2024)
+          schools across {provinceData?.provinces?.name || "Indonesia"} (2024)
         </p>
       </CardHeader>
       <CardContent>

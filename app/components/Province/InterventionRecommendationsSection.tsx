@@ -4,6 +4,7 @@ import { Target, TrendingUp, ArrowUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import DetailedRecommendations from "./DetailedRecommendations";
 import dynamic from "next/dynamic";
+import { ProvinceData } from "@/app/types/province";
 
 const ProvinceDetailMap = dynamic(() => import("./ProvinceDetailMap"), {
   loading: () => (
@@ -40,12 +41,13 @@ interface InterventionRecommendationsSectionProps {
   };
   estimatedBudget: string;
   provinceName: string;
+  provinceData?: ProvinceData;
 }
 
 const InterventionRecommendationsSection: React.FC<
   InterventionRecommendationsSectionProps
-> = ({ interventionData, estimatedBudget, provinceName }) => {
-  return (  
+> = ({ interventionData, estimatedBudget, provinceName, provinceData }) => {
+  return (
     <div className="space-y-8">
       {/* Headline Recommendation */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">

@@ -5,6 +5,8 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { TeacherChart } from "../Dashboard/TeacherChart";
 import { SchoolsBreakdown } from "../Dashboard/SchoolsBreakdown";
 
+import { ProvinceData } from "@/app/types/province";
+
 interface CurrentSituationSection {
   interventionData: {
     expectedGapScore: number;
@@ -29,11 +31,13 @@ interface CurrentSituationSection {
     }[];
   };
   estimatedBudget: string;
+  provinceData?: ProvinceData;
 }
 
 const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
   interventionData,
   estimatedBudget,
+  provinceData,
 }) => {
   return (
     <div className="space-y-8">
@@ -161,9 +165,12 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
           </p>
         </div>
       </div>
-      <TeacherChart />
-
-      <SchoolsBreakdown />
+      {provinceData && (
+        <>
+          <TeacherChart provinceData={provinceData} />
+          <SchoolsBreakdown provinceData={provinceData} />
+        </>
+      )}
     </div>
   );
 };

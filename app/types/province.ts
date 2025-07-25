@@ -83,6 +83,7 @@ export interface ProvinceData {
   social: SocialIndicators;
   provinces: ProvinceInfo;
   total: TotalSummary;
+  gap_score?: number;
 }
 
 // Raw province data (what API actually returns)
@@ -93,6 +94,7 @@ export interface RawProvinceData {
   funding: number;
   social: SocialIndicators;
   provinces: ProvinceInfo;
+  gap_score?: number;
 }
 
 // API response wrapper

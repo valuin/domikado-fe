@@ -9,9 +9,19 @@ const App = () => {
   });
 
   if (isLoading) {
-    return <div className="min-h-screen grid place-items-center">
-      <Loader2 className="animate-spin"/>
-    </div>;
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <Loader2 className="animate-spin" />
+      </div>
+    );
+  }
+
+  if (!provinceData) {
+    return (
+      <div className="min-h-screen grid place-items-center">
+        <p className="text-muted-foreground">No data available</p>
+      </div>
+    );
   }
 
   return <Index data={provinceData} />;
