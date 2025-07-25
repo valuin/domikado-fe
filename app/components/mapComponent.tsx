@@ -3,17 +3,12 @@ import { ArrowLeft } from "lucide-react";
 import React, { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
-import { fetchAllProvinceJson, formatTopoJSON } from "@/lib/utils";
+import { fetchAllProvinceJson } from "@/lib/utils";
 import type { Feature, FeatureCollection } from "geojson";
 import { redirect, useRouter } from "next/navigation";
 
 interface ProvinceProperties {
   provinsi: string;
-  [key: string]: any;
-}
-
-interface CityProperties {
-  kabkot: string;
   [key: string]: any;
 }
 
@@ -48,9 +43,6 @@ export default function MapComponent() {
   useEffect(() => {
     fetchAllProvinceJson()
       .then((data: FeatureCollection) => {
-        console.log("Received GeoJSON data:", data);
-        console.log("Number of features:", data.features.length);
-
         const initialProvinceScores: Record<string, number> = {};
         data.features.forEach((feature: Feature, index: number) => {
           const properties = feature.properties as ProvinceProperties;
@@ -146,7 +138,7 @@ export default function MapComponent() {
           .replace(" ", "-");
 
         redirect(`/province/${formattedProvinceName}`);
-        },
+      },
     });
 
     layer.bindTooltip(

@@ -224,6 +224,7 @@ const ProvincePage = () => {
             <InterventionRecommendationsSection
               interventionData={interventionData}
               estimatedBudget={provinceData.estimatedBudget}
+              provinceName={provinceName}
             />
           </TabsContent>
         </Tabs>

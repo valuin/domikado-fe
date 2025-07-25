@@ -3,7 +3,18 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Target, TrendingUp, ArrowUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import DetailedRecommendations from "./DetailedRecommendations";
+import dynamic from "next/dynamic";
 
+const ProvinceDetailMap = dynamic(() => import("./ProvinceDetailMap"), {
+  loading: () => (
+    <div className="h-96 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-500 mx-auto mb-4"></div>
+        <p className="text-gray-500">Memuat peta...</p>
+      </div>
+    </div>
+  ),
+});
 interface InterventionRecommendationsSectionProps {
   interventionData: {
     expectedGapScore: number;
@@ -28,12 +39,13 @@ interface InterventionRecommendationsSectionProps {
     }[];
   };
   estimatedBudget: string;
+  provinceName: string;
 }
 
 const InterventionRecommendationsSection: React.FC<
   InterventionRecommendationsSectionProps
-> = ({ interventionData, estimatedBudget }) => {
-  return (
+> = ({ interventionData, estimatedBudget, provinceName }) => {
+  return (  
     <div className="space-y-8">
       {/* Headline Recommendation */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
@@ -177,6 +189,9 @@ const InterventionRecommendationsSection: React.FC<
         </div>
       </div>
       {/* Budget Allocation Recommendation */}
+
+      {/* Aceh Heatmap Analysis */}
+      <ProvinceDetailMap provinceName={provinceName} />
 
       <DetailedRecommendations interventionData={interventionData} />
     </div>
