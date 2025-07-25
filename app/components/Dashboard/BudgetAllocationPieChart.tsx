@@ -13,37 +13,38 @@ import {
   Tooltip,
 } from "recharts";
 import { DollarSign } from "lucide-react";
+import { formatRupiah } from "@/lib/utils";
 
 const budgetData = [
   {
     name: "Teacher Salaries",
-    value: 45.2,
+    value: 42.5,
     color: "hsl(var(--data-blue))",
-    description: "Elementary schools (SD)",
+    description: "Compensation for 3.1M teachers",
   },
   {
-    name: "Secondary Education",
-    value: 28.7,
+    name: "School Operations",
+    value: 31.2,
     color: "hsl(var(--data-green))",
-    description: "Junior & senior high schools",
-  },
-  {
-    name: "Higher Education",
-    value: 15.3,
-    color: "hsl(var(--data-orange))",
-    description: "Universities & colleges",
+    description: "Daily operations & maintenance",
   },
   {
     name: "Infrastructure",
-    value: 8.1,
+    value: 18.8,
+    color: "hsl(var(--data-orange))",
+    description: "Buildings, facilities & equipment",
+  },
+  {
+    name: "Student Support",
+    value: 5.2,
     color: "hsl(var(--data-yellow))",
-    description: "Buildings & facilities",
+    description: "Scholarships & assistance programs",
   },
   {
     name: "Administration",
-    value: 2.7,
+    value: 2.3,
     color: "hsl(var(--data-red))",
-    description: "Ministry operations",
+    description: "Ministry & regional operations",
   },
 ];
 
@@ -81,7 +82,8 @@ const CustomLegend = ({ payload }: any) => {
   );
 };
 
-export const BudgetAllocationPieChart = () => {
+export const BudgetAllocationPieChart = ({ funding }: { funding: number }) => {
+  const formattedFunding = formatRupiah(funding);
   return (
     <Card className="shadow-card">
       <CardHeader>
@@ -120,7 +122,7 @@ export const BudgetAllocationPieChart = () => {
             <p className="text-sm text-muted-foreground">
               Total Education Budget
             </p>
-            <p className="text-lg font-bold text-primary">$612.3B</p>
+            <p className="text-lg font-bold text-primary">{formattedFunding}</p>
           </div>
           <div>
             <p className="text-sm text-muted-foreground">of National Budget</p>

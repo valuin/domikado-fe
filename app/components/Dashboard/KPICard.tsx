@@ -81,16 +81,7 @@ export const KPICard = ({
 
           <Progress value={percentage} className="h-2" />
 
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-muted-foreground">{description}</span>
-            <div className={`flex items-center space-x-1 ${getTrendColor()}`}>
-              {getTrendIcon()}
-              <span className="text-xs font-medium">
-                {trend === "stable" ? "±" : trend === "up" ? "+" : "-"}
-                {trendValue}%
-              </span>
-            </div>
-          </div>
+       
         </div>
       </CardContent>
     </Card>

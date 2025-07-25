@@ -63,28 +63,33 @@ const isPointInPolygon = (
   return inside;
 };
 
-const getYearlyIntensityMultiplier = (
-  year: number
+// Monthly intensity calculation for 3 years (36 months)
+const getMonthlyIntensityMultiplier = (
+  month: number
 ): { base: number; variance: number } => {
-  const yearData = {
-    2020: { base: 85, variance: 15 },
-    2021: { base: 70, variance: 20 },
-    2022: { base: 55, variance: 20 },
-    2023: { base: 40, variance: 15 },
-    2024: { base: 1, variance: 1 },
+  // Month 1 = January 2022 (start), Month 36 = December 2024 (end)
+  // Create gradual improvement from high intensity (bad) to low intensity (good)
+
+  // Linear decrease from 90 to 15 over 36 months
+  const baseIntensity = Math.max(15, 90 - (month - 1) * (75 / 35));
+
+  // Variance decreases as situation stabilizes
+  const variance = Math.max(8, 20 - (month - 1) * (12 / 35));
+
+  return {
+    base: Math.round(baseIntensity),
+    variance: Math.round(variance),
   };
-  return yearData[year as keyof typeof yearData] || yearData[2024];
 };
 
-// Function to generate time-aware dummy heatmap points within province boundary
-const generateTimeSeriesHeatmapPoints = (
+// Generate consistent fixed locations for heatmap points
+const generateFixedLocations = (
   feature: Feature,
-  year: number,
-  count: number = 40
-): [number, number, number][] => {
-  const points: [number, number, number][] = [];
+  count: number = 45
+): [number, number][] => {
+  const locations: [number, number][] = [];
 
-  if (!feature.geometry) return points;
+  if (!feature.geometry) return locations;
 
   // Get bounding box of the feature
   let minLat = Infinity,
@@ -112,40 +117,72 @@ const generateTimeSeriesHeatmapPoints = (
     );
   }
 
-  // Get year-specific intensity parameters
-  const { base, variance } = getYearlyIntensityMultiplier(year);
+  const seed = 12345;
+  let seedValue = seed;
 
-  // Generate random points within bounding box and check if they're inside the polygon
+  const seededRandom = () => {
+    seedValue = (seedValue * 9301 + 49297) % 233280;
+    return seedValue / 233280;
+  };
+
   let attempts = 0;
-  const maxAttempts = count * 10;
+  const maxAttempts = count * 15;
 
-  while (points.length < count && attempts < maxAttempts) {
-    const lat = minLat + Math.random() * (maxLat - minLat);
-    const lng = minLng + Math.random() * (maxLng - minLng);
+  while (locations.length < count && attempts < maxAttempts) {
+    const lat = minLat + seededRandom() * (maxLat - minLat);
+    const lng = minLng + seededRandom() * (maxLng - minLng);
 
-    // Check if point is inside the province boundary
     let isInside = false;
 
     if (feature.geometry.type === "Polygon") {
       isInside = isPointInPolygon([lat, lng], feature.geometry.coordinates[0]);
     } else if (feature.geometry.type === "MultiPolygon") {
-      // Check against all polygons in MultiPolygon
       isInside = feature.geometry.coordinates.some((polygon) =>
         isPointInPolygon([lat, lng], polygon[0])
       );
     }
 
     if (isInside) {
-      // Generate year-appropriate intensity (improvement over time)
-      const randomVariance = (Math.random() - 0.5) * variance;
-      const intensity = Math.max(10, Math.min(100, base + randomVariance));
-      points.push([lat, lng, intensity]);
+      locations.push([lat, lng]);
     }
 
     attempts++;
   }
 
-  return points;
+  return locations;
+};
+
+// Function to generate consistent heatmap points with time-varying intensity
+const generateTimeSeriesHeatmapPoints = (
+  feature: Feature,
+  month: number,
+  fixedLocations?: [number, number][]
+): [number, number, number][] => {
+  // Generate fixed locations if not provided
+  const locations = fixedLocations || generateFixedLocations(feature, 45);
+
+  // Get month-specific intensity parameters
+  const { base, variance } = getMonthlyIntensityMultiplier(month);
+
+  // Apply time-varying intensity to fixed locations
+  return locations.map(([lat, lng], index) => {
+    // Calculate intensity that decreases by 200 each month, starting from 5000
+    const baseIntensity = 5000 - (month - 1) * 200;
+
+    // Add some location-specific variation (±50) for visual variety
+    const locationSeed = 12345 + index * 67;
+    let seedValue = locationSeed;
+    const seededRandom = () => {
+      seedValue = (seedValue * 9301 + 49297) % 233280;
+      return seedValue / 233280;
+    };
+
+    const locationVariance = (seededRandom() - 0.5) * 100; // ±50 variation
+    const intensity = Math.max(100, baseIntensity + locationVariance); // Minimum 100
+
+    console.log(intensity)
+    return [lat, lng, intensity] as [number, number, number];
+  });
 };
 
 // Custom Hook for Time-Series Heatmap with Province Boundary Clipping
@@ -153,9 +190,10 @@ const useTimeSeriesHeatmap = (
   mapRef: React.RefObject<any>,
   provinceData: FeatureCollection | null,
   isMapReady: boolean,
-  currentYear: number
+  currentMonth: number
 ) => {
   const heatLayerRef = useRef<any>(null);
+  const fixedLocationsRef = useRef<[number, number][] | null>(null);
 
   useEffect(() => {
     if (
@@ -170,6 +208,11 @@ const useTimeSeriesHeatmap = (
     const map = mapRef.current;
     const provinceFeature = provinceData.features[0];
 
+    // Generate fixed locations only once per province
+    if (!fixedLocationsRef.current) {
+      fixedLocationsRef.current = generateFixedLocations(provinceFeature, 45);
+    }
+
     // Remove existing heatmap
     if (heatLayerRef.current) {
       try {
@@ -179,11 +222,11 @@ const useTimeSeriesHeatmap = (
       }
     }
 
-    // Generate time-series points within province boundary
+    // Generate time-series points with consistent locations but varying intensity
     const heatmapPoints = generateTimeSeriesHeatmapPoints(
       provinceFeature,
-      currentYear,
-      40
+      currentMonth,
+      fixedLocationsRef.current
     );
 
     if (heatmapPoints.length === 0) {
@@ -191,21 +234,43 @@ const useTimeSeriesHeatmap = (
       return;
     }
 
-    // Create heatmap layer with reversed gradient (lower intensity = better = green)
+    // Debug: Log intensity values for current month
+    const intensities = heatmapPoints.map((point) => point[2]);
+    const avgIntensity =
+      intensities.reduce((sum, i) => sum + i, 0) / intensities.length;
+    const minIntensity = Math.min(...intensities);
+    const maxIntensity = Math.max(...intensities);
+
+    console.log(
+      `Month ${currentMonth}: Avg=${avgIntensity.toFixed(
+        0
+      )}, Min=${minIntensity.toFixed(0)}, Max=${maxIntensity.toFixed(0)}`
+    );
+    console.log(
+      `Expected base for month ${currentMonth}: ${
+        5000 - (currentMonth - 1) * 200
+      }`
+    );
+
+    // Create heatmap layer with proper gradient (lower intensity = better = green)
     const heatmapOptions = {
-      radius: 50,
-      blur: 25,
+      radius: 40,
+      blur: 30,
       maxZoom: 17,
-      max: 100,
+      max: 5100, // Adjusted to match our new intensity range (5000 + variance)
       gradient: {
-        0.0: "#00ff00", // Green (Low intensity = Good)
-        0.25: "#80ff00", // Light Green
-        0.4: "#ffff00", // Yellow
-        0.6: "#ff8000", // Orange
-        0.8: "#ff4000", // Red-Orange
-        1.0: "#ff0000", // Red (High intensity = Bad)
+        0.0: "#00ff00", // Green (Low intensity = Excellent)
+        0.2: "#66ff00", // Light Green
+        0.3: "#ccff00", // Yellow-Green
+        0.4: "#ffff00", // Yellow (Medium)
+        0.5: "#ffcc00", // Orange-Yellow
+        0.6: "#ff9900", // Orange
+        0.7: "#ff6600", // Dark Orange
+        0.8: "#ff3300", // Red-Orange
+        0.9: "#ff1100", // Dark Red
+        1.0: "#ff0000", // Red (Needs Attention)
       },
-      minOpacity: 0.5,
+      minOpacity: 0.4,
     };
 
     try {
@@ -213,7 +278,7 @@ const useTimeSeriesHeatmap = (
       heatLayerRef.current.addTo(map);
 
       console.log(
-        `Time-series heatmap created with ${heatmapPoints.length} points for year ${currentYear}`
+        `Time-series heatmap created with ${heatmapPoints.length} points for month ${currentMonth}`
       );
     } catch (error) {
       console.error("Error creating heatmap:", error);
@@ -228,7 +293,7 @@ const useTimeSeriesHeatmap = (
         }
       }
     };
-  }, [mapRef, provinceData, isMapReady, currentYear]);
+  }, [mapRef, provinceData, isMapReady, currentMonth]);
 
   return heatLayerRef.current;
 };
@@ -238,43 +303,146 @@ interface ProvinceProperties {
   [key: string]: any;
 }
 
-// Yearly narration data
-const getYearlyNarration = (
-  year: number
-): { title: string; description: string; trend: "up" | "down" } => {
-  const narrations = {
-    2020: {
+// Monthly narration data for 3 years (36 months)
+const getMonthlyNarration = (
+  month: number
+): {
+  title: string;
+  description: string;
+  trend: "up" | "down";
+  year: number;
+  monthName: string;
+} => {
+  const year = Math.floor((month - 1) / 12) + 2022;
+  const monthIndex = (month - 1) % 12;
+  const monthNames = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+  const monthName = monthNames[monthIndex];
+
+  // Create quarterly milestones for better narrative flow
+  const quarter = Math.floor((month - 1) / 3) + 1;
+
+  type PhaseData = {
+    phase: "baseline" | "planning" | "early" | "accelerated" | "transformation";
+    title: string;
+    trend: "up" | "down";
+  };
+
+  const narrativePhases: Record<number, PhaseData> = {
+    // Months 1-6: Critical baseline period
+    1: {
+      phase: "baseline",
       title: "Baseline Assessment - Critical Situation",
-      description:
-        "Initial implementation of educational intervention shows high intensity areas indicating significant gaps. Many regions show critical levels requiring immediate attention. The red zones represent areas with the highest educational disparities and urgent need for comprehensive support.",
-      trend: "down" as const,
+      trend: "down",
     },
-    2021: {
-      title: "Early Intervention Response",
-      description:
-        "First year of targeted interventions begins showing modest improvements. Teacher training programs and infrastructure development start addressing critical gaps. Some regions show early positive responses, though significant challenges remain in remote areas.",
-      trend: "up" as const,
+    2: {
+      phase: "baseline",
+      title: "Initial Data Collection",
+      trend: "down",
     },
-    2022: {
-      title: "Accelerated Progress",
-      description:
-        "Comprehensive educational reforms gain momentum with notable improvements across multiple districts. Digital learning initiatives and community engagement programs show positive impact. Yellow zones indicate transitioning areas moving towards better outcomes.",
-      trend: "up" as const,
+    3: {
+      phase: "baseline",
+      title: "Problem Identification",
+      trend: "down",
     },
-    2023: {
-      title: "Sustained Improvement",
-      description:
-        "Continued investment in education yields significant results with most regions showing marked improvement. Green zones expand as educational quality improves. Collaborative efforts between government, educators, and communities create lasting positive change.",
-      trend: "up" as const,
+    4: {
+      phase: "planning",
+      title: "Intervention Planning Phase",
+      trend: "down",
     },
-    2024: {
-      title: "Transformed Educational Landscape",
-      description:
-        "The province demonstrates remarkable transformation with predominantly green zones indicating successful intervention outcomes. Sustained improvement in educational quality, accessibility, and equity shows the long-term impact of targeted recommendations and community commitment.",
-      trend: "up" as const,
+    5: {
+      phase: "planning",
+      title: "Resource Allocation",
+      trend: "down",
+    },
+    6: {
+      phase: "planning",
+      title: "Early Implementation Preparation",
+      trend: "up",
+    },
+
+    // Months 7-18: Early intervention
+    7: {
+      phase: "early",
+      title: "Initial Intervention Deployment",
+      trend: "up",
+    },
+    12: {
+      phase: "early",
+      title: "First Quarter Results",
+      trend: "up",
+    },
+    18: {
+      phase: "early",
+      title: "Early Positive Indicators",
+      trend: "up",
+    },
+
+    // Months 19-30: Accelerated progress
+    24: {
+      phase: "accelerated",
+      title: "Significant Improvement Phase",
+      trend: "up",
+    },
+    30: {
+      phase: "accelerated",
+      title: "Sustained Positive Trends",
+      trend: "up",
+    },
+
+    // Months 31-36: Transformation
+    33: {
+      phase: "transformation",
+      title: "Educational Transformation",
+      trend: "up",
+    },
+    36: {
+      phase: "transformation",
+      title: "Comprehensive Success",
+      trend: "up",
     },
   };
-  return narrations[year as keyof typeof narrations] || narrations[2024];
+
+  // Find the closest narrative phase
+  let selectedPhase: PhaseData = narrativePhases[1];
+  for (const [phaseMonth, phase] of Object.entries(narrativePhases)) {
+    if (month >= parseInt(phaseMonth)) {
+      selectedPhase = phase;
+    }
+  }
+
+  const descriptions = {
+    baseline:
+      "High-intensity red zones dominate the landscape, indicating critical educational gaps requiring immediate intervention. Assessment reveals significant disparities in educational quality, infrastructure, and access across the province.",
+    planning:
+      "Strategic planning and resource mobilization phase shows continued challenges while preparing comprehensive intervention strategies. Initial groundwork being laid for systematic educational improvements.",
+    early:
+      "First signs of improvement emerge as targeted interventions begin implementation. Orange and yellow zones start appearing, indicating early positive responses to educational reforms and infrastructure development.",
+    accelerated:
+      "Notable progress accelerates across multiple districts with expanding yellow and light green zones. Community engagement programs and digital learning initiatives show measurable positive impact on educational outcomes.",
+    transformation:
+      "Remarkable transformation with predominantly green zones indicating successful intervention outcomes. Comprehensive improvements in educational quality, accessibility, and equity demonstrate the lasting impact of sustained reform efforts.",
+  };
+
+  return {
+    title: selectedPhase.title,
+    description: descriptions[selectedPhase.phase as keyof typeof descriptions],
+    trend: selectedPhase.trend,
+    year,
+    monthName,
+  };
 };
 
 const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
@@ -288,7 +456,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
   const [mapCenter, setMapCenter] = useState<[number, number]>([-2.5, 118]);
   const [mapZoom, setMapZoom] = useState<number>(7);
   const [isMapReady, setIsMapReady] = useState(false);
-  const [currentYear, setCurrentYear] = useState<number>(2024);
+  const [currentMonth, setCurrentMonth] = useState<number>(36); // Start at month 36 (Dec 2024)
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -309,7 +477,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
         if (filteredData[0].properties?.provinsi == provinceName) {
           setMapZoom(10);
         } else {
-          setMapZoom(8);
+          setMapZoom(5);
         }
       }
 
@@ -319,7 +487,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
   }, [provinceName]);
 
   // Use the time-series heatmap hook
-  useTimeSeriesHeatmap(mapRef, geoJsonData, isMapReady, currentYear);
+  useTimeSeriesHeatmap(mapRef, geoJsonData, isMapReady, currentMonth);
 
   const onEachFeature = (feature: Feature, layer: any) => {
     const properties = feature.properties as ProvinceProperties;
@@ -354,7 +522,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
     );
   };
 
-  const currentNarration = getYearlyNarration(currentYear);
+  const currentNarration = getMonthlyNarration(currentMonth);
 
   return (
     <>
@@ -372,30 +540,30 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <label className="text-sm font-medium text-gray-700">
-                  Analysis Year: {currentYear}
+                  Timeline: {currentNarration.monthName} {currentNarration.year}
                 </label>
                 <div className="text-sm text-gray-600">
-                  {currentYear === 2020
+                  {currentMonth === 1
                     ? "Baseline"
-                    : `${currentYear - 2020} years after intervention`}
+                    : `Month ${currentMonth} of intervention`}
                 </div>
               </div>
 
               <Slider
-                value={[currentYear]}
-                onValueChange={(value) => setCurrentYear(value[0])}
-                min={2020}
-                max={2024}
+                value={[currentMonth]}
+                onValueChange={(value) => setCurrentMonth(value[0])}
+                min={1}
+                max={36}
                 step={1}
                 className="w-full"
               />
 
               <div className="flex justify-between text-xs text-gray-500">
-                <span>2020</span>
-                <span>2021</span>
+                <span>Jan 2022</span>
                 <span>2022</span>
                 <span>2023</span>
                 <span>2024</span>
+                <span>Dec 2024</span>
               </div>
             </div>
           </div>
@@ -464,7 +632,8 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
               </div>
               <div>
                 <h3 className="text-xl font-bold text-blue-900 mb-3">
-                  {currentYear}: {currentNarration.title}
+                  {currentNarration.monthName} {currentNarration.year}:{" "}
+                  {currentNarration.title}
                 </h3>
                 <p className="text-blue-800 leading-relaxed">
                   {currentNarration.description}

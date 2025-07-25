@@ -57,7 +57,7 @@ export default function MapComponent() {
 
         setGeoJsonData(data);
         setMapLoading(false);
-        console.log("Map loading set to false");
+        
       })
       .catch((error) => {
         console.error("Error loading map data:", error);
@@ -183,9 +183,7 @@ export default function MapComponent() {
             scrollWheelZoom={true}
             className={`rounded-lg relative`}
             ref={mapRef}
-            whenReady={() => {
-              console.log("Map is ready!");
-            }}
+            
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

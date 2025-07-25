@@ -22,7 +22,8 @@ const ProvincePage = () => {
       ?.replace(/-/g, " ")
       .replace(/\b\w/g, (l) => l.toUpperCase()) || "Jawa Barat";
 
-  // Mock province data
+      console.log(provinceName)
+  
   const provinceData = {
     name: provinceName,
     population: "48.2 juta",

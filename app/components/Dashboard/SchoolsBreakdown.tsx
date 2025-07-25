@@ -52,99 +52,90 @@ type HierarchyData = {
   }[];
 };
 
+// This would ideally come from props, but for now using static data based on the API response
 const schoolData: SchoolTopic[] = [
   {
     name: "Elementary Schools (SD)",
-    totalValue: 148420,
-    totalPercentage: 68.2,
+    totalValue: 151335,
+    totalPercentage: 66.5,
     color: "hsl(var(--data-blue))",
-    teachers: 1200000,
-    students: 25000000,
-    ratio: 20.8,
+    teachers: 1654764,
+    students: 24081832,
+    ratio: 15.2,
     breakdown: [
       {
         name: "Public Elementary",
-        value: 82457,
+        value: 129284,
         description: "Government-run elementary schools",
       },
       {
         name: "Private Elementary",
-        value: 17964,
+        value: 19750,
         description: "Private elementary schools",
       },
       {
         name: "Special Education",
-        value: 5000,
+        value: 2301,
         description: "Schools for children with special needs",
       },
     ],
   },
   {
     name: "Junior High Schools (SMP)",
-    totalValue: 40576,
-    totalPercentage: 18.6,
+    totalValue: 45298,
+    totalPercentage: 19.9,
     color: "hsl(var(--data-green))",
-    teachers: 850000,
-    students: 12000000,
-    ratio: 14.1,
+    teachers: 729780,
+    students: 10151103,
+    ratio: 13.9,
     breakdown: [
       {
         name: "Public Junior High",
-        value: 32461,
+        value: 24076,
         description: "Government-run junior high schools",
       },
       {
         name: "Private Junior High",
-        value: 8115,
+        value: 19022,
         description: "Private junior high schools",
+      },
+      {
+        name: "Special Education",
+        value: 2200,
+        description: "Schools for children with special needs",
       },
     ],
   },
   {
     name: "Senior High Schools (SMA)",
-    totalValue: 28745,
-    totalPercentage: 13.2,
+    totalValue: 30957,
+    totalPercentage: 13.6,
     color: "hsl(var(--data-orange))",
-    teachers: 650000,
-    students: 8000000,
-    ratio: 12.3,
+    teachers: 701781,
+    students: 10481481,
+    ratio: 14.9,
     breakdown: [
       {
         name: "Public Senior High",
-        value: 20122,
+        value: 10805,
         description: "Government-run senior high schools",
       },
       {
         name: "Private Senior High",
-        value: 8623,
+        value: 18135,
         description: "Private senior high schools",
       },
-    ],
-  },
-  {
-    name: "Vocational Schools (SMK)",
-    totalValue: 14500,
-    totalPercentage: 6.7,
-    color: "hsl(var(--data-yellow))",
-    teachers: 390000,
-    students: 5000000,
-    ratio: 12.8,
-    breakdown: [
       {
-        name: "Public Vocational",
-        value: 8700,
-        description: "Government-run vocational schools",
-      },
-      {
-        name: "Private Vocational",
-        value: 5800,
-        description: "Private vocational schools",
+        name: "Special Education",
+        value: 2017,
+        description: "Schools for children with special needs",
       },
     ],
   },
 ];
 
-const totalSchools = schoolData.reduce((sum, item) => sum + item.totalValue, 0);
+// Using real data from API: 227,590 total schools
+const totalSchools = 227590;
 
 const VISIBLE_TEXT_WIDTH = 10;
 const VISIBLE_TEXT_HEIGHT = 10;
@@ -176,7 +167,8 @@ export function TreemapChart({ data: rawData }: TreemapChartProps) {
     .sum((d) => d.value || 0)
     .sort((a, b) => (b.value || 0) - (a.value || 0));
 
-  d3.treemap<HierarchyData>()
+  d3
+    .treemap<HierarchyData>()
     .size([100, 100])
     .paddingInner(0.75)
     .paddingOuter(1)
@@ -195,7 +187,9 @@ export function TreemapChart({ data: rawData }: TreemapChartProps) {
         {leaves.map((leaf, i) => {
           const leafWidth = leaf.x1 - leaf.x0;
           const leafHeight = leaf.y1 - leaf.y0;
-          const parentColor = colorScale(leaf.parent?.data.name || "") as string;
+          const parentColor = colorScale(
+            leaf.parent?.data.name || ""
+          ) as string;
 
           return (
             <TooltipTrigger key={i} data={leaf}>
@@ -234,32 +228,32 @@ export const SchoolsBreakdown = () => {
           School Breakdown by Type
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Detailed distribution of {totalSchools.toLocaleString('en-US')} schools
-          across Indonesia (2024)
+          Detailed distribution of {totalSchools.toLocaleString("en-US")}{" "}
+          schools across Indonesia (2024)
         </p>
       </CardHeader>
       <CardContent>
         <TreemapChart data={schoolData} />
 
-       <div className="mt-6 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-primary/10">
-         <div className="flex items-center justify-between">
-           <div className="flex items-center space-x-2">
-             <BookOpen className="w-5 h-5 text-primary" />
-             <span className="font-semibold text-primary">
-               Total Schools in Indonesia
-             </span>
-           </div>
-           <div className="text-right">
-             <div className="text-xl font-bold text-primary">
-               {totalSchools.toLocaleString('en-US')}
-             </div>
-             <div className="text-sm text-muted-foreground">
-               Across all education levels
-             </div>
-           </div>
-         </div>
-       </div>
-     </CardContent>
-   </Card>
- );
+        <div className="mt-6 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-primary/10">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2">
+              <BookOpen className="w-5 h-5 text-primary" />
+              <span className="font-semibold text-primary">
+                Total Schools in Indonesia
+              </span>
+            </div>
+            <div className="text-right">
+              <div className="text-xl font-bold text-primary">
+                {totalSchools.toLocaleString("en-US")}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Across all education levels
+              </div>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
 };
