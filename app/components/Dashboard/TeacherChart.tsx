@@ -217,15 +217,15 @@ const generateTeacherData = (provinceData?: any) => {
 
 const chartConfig = {
   elementary: {
-    label: "Elementary Ratio",
+    label: "Elementary Teachers",
     color: "hsl(var(--chart-1))",
   },
   juniorHigh: {
-    label: "Junior High Ratio",
+    label: "Junior High Teachers",
     color: "hsl(var(--chart-2))",
   },
   seniorHigh: {
-    label: "Senior High Ratio",
+    label: "Senior High Teachers",
     color: "hsl(var(--chart-3))",
   },
 } satisfies ChartConfig;
@@ -246,7 +246,7 @@ export function TeacherChart({ provinceData }: TeacherChartProps) {
         </CardTitle>
         <CardDescription>
           Time-series fluctuation of student to teacher ratios across education
-          levels.
+          levels. UNESCO standard ratio is 1:16.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -266,23 +266,7 @@ export function TeacherChart({ provinceData }: TeacherChartProps) {
               axisLine={false}
               tickMargin={8}
             />
-            <YAxis
-              tickLine={false}
-              axisLine={false}
-              tickMargin={8}
-              tickFormatter={(value) => `1:${value.toFixed(1)}`}
-            />
-            <ReferenceLine
-              y={16}
-              stroke="hsl(var(--destructive))"
-              strokeDasharray="3 3"
-              label={{
-                value: "UNESCO Standard Ratio (1:16)",
-                position: "insideTopRight",
-                fill: "hsl(var(--destructive))",
-                fontSize: 10,
-              }}
-            />
+            <YAxis tickLine={false} axisLine={false} tickMargin={8} />
             <ChartTooltip
               cursor={false}
               content={({ active, payload, label }) => {
@@ -294,21 +278,24 @@ export function TeacherChart({ provinceData }: TeacherChartProps) {
                       {payload.map((entry) => {
                         if (!entry.dataKey) return null;
                         // Extract the original key (e.g., "elementary" from "ratioElementary")
-                        const originalDataKey = (entry.dataKey as string)
-                          .replace("ratio", "")
-                          .toLowerCase();
+                        const originalDataKey = entry.dataKey as string; // "elementary", "juniorHigh", "seniorHigh"
+                        const chartConfigKey =
+                          originalDataKey as keyof typeof chartConfig; // "elementary", "juniorHigh", "seniorHigh"
                         const dataKey =
-                          originalDataKey as keyof typeof chartConfig;
+                          chartConfigKey as keyof typeof chartConfig;
 
                         // Ensure chartConfig[dataKey] exists before accessing its properties
                         if (!chartConfig[dataKey]) return null;
 
-                        const originalLabel = chartConfig[
-                          dataKey
-                        ].label.replace(" Ratio", "");
-                        const studentKey = `students${originalLabel}`;
-                        const teacherKey = originalLabel.toLowerCase();
-                        const ratioKey = `ratio${originalLabel}`;
+                        const studentKey = `students${
+                          originalDataKey.charAt(0).toUpperCase() +
+                          originalDataKey.slice(1)
+                        }`;
+                        const teacherKey = originalDataKey;
+                        const ratioKey = `ratio${
+                          originalDataKey.charAt(0).toUpperCase() +
+                          originalDataKey.slice(1)
+                        }`;
 
                         return (
                           <div key={entry.dataKey}>
@@ -341,7 +328,13 @@ export function TeacherChart({ provinceData }: TeacherChartProps) {
                               <span className="text-muted-foreground">
                                 Ratio:
                               </span>
-                              <span className="font-bold">
+                              <span
+                                className={`font-bold ${
+                                  (entry.payload[ratioKey] as number) < 16
+                                    ? "text-red-500"
+                                    : ""
+                                }`}
+                              >
                                 1 :{" "}
                                 {(entry.payload[ratioKey] as number).toFixed(1)}
                               </span>
@@ -357,21 +350,21 @@ export function TeacherChart({ provinceData }: TeacherChartProps) {
             />
             <Legend />
             <Line
-              dataKey="ratioElementary"
+              dataKey="elementary"
               type="monotone"
               stroke="var(--color-elementary)"
               strokeWidth={2}
               dot={false}
             />
             <Line
-              dataKey="ratioJuniorHigh"
+              dataKey="juniorHigh"
               type="monotone"
               stroke="var(--color-juniorHigh)"
               strokeWidth={2}
               dot={false}
             />
             <Line
-              dataKey="ratioSeniorHigh"
+              dataKey="seniorHigh"
               type="monotone"
               stroke="var(--color-seniorHigh)"
               strokeWidth={2}

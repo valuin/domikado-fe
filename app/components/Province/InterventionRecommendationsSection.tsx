@@ -192,9 +192,6 @@ const InterventionRecommendationsSection: React.FC<
       </div>
       {/* Budget Allocation Recommendation */}
 
-      {/* Aceh Heatmap Analysis */}
-      <ProvinceDetailMap provinceName={provinceName} />
-
       <DetailedRecommendations interventionData={interventionData} />
     </div>
   );

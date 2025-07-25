@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Tabs,
@@ -10,8 +10,11 @@ import {
 import ProvinceHeader from "@/app/components/Province/ProvinceHeader";
 import CurrentSituationSection from "@/app/components/Province/CurrentSituationSection";
 import InterventionRecommendationsSection from "@/app/components/Province/InterventionRecommendationsSection";
+import ProvinceDetailMap from "@/app/components/Province/ProvinceDetailMap";
+import InterventionTimelineSection from "@/app/components/Province/InterventionTimelineSection";
 import { Users, Heart, Building } from "lucide-react";
 import { useProvince } from "@/app/hooks/use-province";
+import { useProvinceStore } from "@/app/store/provinceStore";
 
 const providedData = [
   {
@@ -27,7 +30,8 @@ const providedData = [
 const ProvincePage = () => {
   const params = useParams();
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState("current");
+  const [activeTab, setActiveTab] = React.useState("current");
+  const { currentMonth, isMapReady, setCurrentMonth, setIsMapReady } = useProvinceStore();
 
   const provinceName =
     (params.slug as string)
@@ -186,11 +190,12 @@ const ProvincePage = () => {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto">
-            <TabsTrigger value="current">Situasi Saat Ini</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
+            <TabsTrigger value="current">Current Situation</TabsTrigger>
             <TabsTrigger value="recommendations">
-              Rekomendasi Intervensi
+              Funding Recommendation
             </TabsTrigger>
+            <TabsTrigger value="timeline">Projected Impact</TabsTrigger>
           </TabsList>
 
           {/* Tab 1: Current Situations */}
@@ -209,6 +214,16 @@ const ProvincePage = () => {
               estimatedBudget={provinceData.estimatedBudget}
               provinceName={provinceName}
               provinceData={data}
+            />
+          </TabsContent>
+
+          {/* Tab 3: Intervention Timeline (now includes map) */}
+          <TabsContent value="timeline" className="space-y-8">
+            <ProvinceDetailMap
+              provinceName={provinceName}
+            />
+            <InterventionTimelineSection
+              provinceName={provinceName}
             />
           </TabsContent>
         </Tabs>
