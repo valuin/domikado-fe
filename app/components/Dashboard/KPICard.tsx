@@ -91,17 +91,6 @@ export const KPICard = ({
               </span>
             </div>
           </div>
-
-          <div className="pt-2">
-            <div className="text-xs text-muted-foreground">Progress Bar</div>
-            <div className="flex items-center justify-between text-xs">
-              <span>0</span>
-              <span className="font-medium text-primary">
-                {percentage.toFixed(1)}%
-              </span>
-              <span>{maxScore}</span>
-            </div>
-          </div>
         </div>
       </CardContent>
     </Card>
