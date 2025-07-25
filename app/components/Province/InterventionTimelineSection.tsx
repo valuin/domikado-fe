@@ -11,9 +11,9 @@ import {
 } from "@/app/components/ui/card";
 import { useProvinceStore } from "@/app/store/provinceStore";
 
-// Monthly narration data for 3 years (36 months)
+// Monthly narration data for 5 years (60 months)
 const getMonthlyNarration = (
-  month: number
+  step: number
 ): {
   title: string;
   description: string;
@@ -21,8 +21,9 @@ const getMonthlyNarration = (
   year: number;
   monthName: string;
 } => {
-  const year = Math.floor((month - 1) / 12) + 2022;
-  const monthIndex = (month - 1) % 12;
+  const totalMonths = (step - 1) * 3;
+  const year = Math.floor(totalMonths / 12) + 2025;
+  const monthIndex = (totalMonths % 12) + 5; // Start from June (index 5)
   const monthNames = [
     "Jan",
     "Feb",
@@ -37,115 +38,78 @@ const getMonthlyNarration = (
     "Nov",
     "Dec",
   ];
-  const monthName = monthNames[monthIndex];
+  const monthName = monthNames[monthIndex % 12];
 
   type PhaseData = {
-    phase: "baseline" | "planning" | "early" | "accelerated" | "transformation";
+    phase: "planning" | "early" | "accelerated" | "transformation" | "sustainability";
     title: string;
     trend: "up" | "down";
   };
 
   const narrativePhases: Record<number, PhaseData> = {
-    // Months 1-6: Critical baseline period
+    // Steps 1-4 (Year 1): Planning and Early Intervention
     1: {
-      phase: "baseline",
-      title: "Baseline Assessment - Critical Situation",
-      trend: "down",
-    },
-    2: {
-      phase: "baseline",
-      title: "Initial Data Collection",
-      trend: "down",
-    },
-    3: {
-      phase: "baseline",
-      title: "Problem Identification",
+      phase: "planning",
+      title: "Intervention Planning & Mobilization",
       trend: "down",
     },
     4: {
-      phase: "planning",
-      title: "Intervention Planning Phase",
-      trend: "down",
-    },
-    5: {
-      phase: "planning",
-      title: "Resource Allocation",
-      trend: "down",
-    },
-    6: {
-      phase: "planning",
-      title: "Early Implementation Preparation",
-      trend: "up",
-    },
-
-    // Months 7-18: Early intervention
-    7: {
       phase: "early",
-      title: "Initial Intervention Deployment",
+      title: "Early Intervention & Initial Results",
       trend: "up",
     },
+    // Steps 5-8 (Year 2): Accelerated Progress
+    8: {
+      phase: "accelerated",
+      title: "Accelerated Progress & Scaling Up",
+      trend: "up",
+    },
+    // Steps 9-12 (Year 3): Transformation
     12: {
-      phase: "early",
-      title: "First Quarter Results",
-      trend: "up",
-    },
-    18: {
-      phase: "early",
-      title: "Early Positive Indicators",
-      trend: "up",
-    },
-
-    // Months 19-30: Accelerated progress
-    24: {
-      phase: "accelerated",
-      title: "Significant Improvement Phase",
-      trend: "up",
-    },
-    30: {
-      phase: "accelerated",
-      title: "Sustained Positive Trends",
-      trend: "up",
-    },
-
-    // Months 31-36: Transformation
-    33: {
       phase: "transformation",
-      title: "Educational Transformation",
+      title: "Educational Transformation & Deep Impact",
       trend: "up",
     },
-    36: {
-      phase: "transformation",
-      title: "Comprehensive Success",
+    // Steps 13-16 (Year 4): Sustainability
+    16: {
+      phase: "sustainability",
+      title: "Sustainability & Long-term Success",
       trend: "up",
     },
+    // Steps 17-20 (Year 5): Final evaluation
+    20: {
+        phase: "sustainability",
+        title: "Final Evaluation & Future Outlook",
+        trend: "up",
+    }
   };
 
   // Find the closest narrative phase
   let selectedPhase: PhaseData = narrativePhases[1];
-  for (const [phaseMonth, phase] of Object.entries(narrativePhases)) {
-    if (month >= parseInt(phaseMonth)) {
+  for (const [phaseStep, phase] of Object.entries(narrativePhases)) {
+    if (step >= parseInt(phaseStep)) {
       selectedPhase = phase;
     }
   }
 
   const descriptions = {
-    baseline:
-      "High-intensity red zones dominate the landscape, indicating critical educational gaps requiring immediate intervention. Assessment reveals significant disparities in educational quality, infrastructure, and access across the province.",
     planning:
-      "Strategic planning and resource mobilization phase shows continued challenges while preparing comprehensive intervention strategies. Initial groundwork being laid for systematic educational improvements.",
+      "Initial phase focuses on strategic planning, resource allocation, and community engagement. The heatmap shows dark orange, indicating the significant challenges ahead.",
     early:
-      "First signs of improvement emerge as targeted interventions begin implementation. Orange and yellow zones start appearing, indicating early positive responses to educational reforms and infrastructure development.",
+      "Targeted interventions are rolled out. The heatmap begins to shift towards lighter orange and yellow, reflecting early positive changes and improvements in key areas.",
     accelerated:
-      "Notable progress accelerates across multiple districts with expanding yellow and light green zones. Community engagement programs and digital learning initiatives show measurable positive impact on educational outcomes.",
+      "Successful programs are scaled up, leading to widespread improvements. The heatmap shows a clear transition to yellow and light green, indicating significant progress.",
     transformation:
-      "Remarkable transformation with predominantly green zones indicating successful intervention outcomes. Comprehensive improvements in educational quality, accessibility, and equity demonstrate the lasting impact of sustained reform efforts.",
+      "The educational landscape is fundamentally transformed. The heatmap is now predominantly light green, with pockets of dark green emerging as a result of deep and sustained impact.",
+    sustainability:
+      "Focus shifts to ensuring long-term success and sustainability of the interventions. The heatmap is now a vibrant green, symbolizing a resilient and thriving educational ecosystem.",
   };
 
   return {
     title: selectedPhase.title,
     description: descriptions[selectedPhase.phase as keyof typeof descriptions],
     trend: selectedPhase.trend,
-    year,
+    year: year + Math.floor(monthIndex / 12),
     monthName,
   };
 };
@@ -177,9 +141,7 @@ export const InterventionTimelineSection: React.FC<InterventionTimelineSectionPr
                 Timeline: {currentNarration.monthName} {currentNarration.year}
               </label>
               <div className="text-sm text-gray-600">
-                {currentMonth === 1
-                  ? "Baseline"
-                  : `Month ${currentMonth} of intervention`}
+                {`Quarter ${currentMonth}`}
               </div>
             </div>
 
@@ -187,17 +149,18 @@ export const InterventionTimelineSection: React.FC<InterventionTimelineSectionPr
               value={[currentMonth]}
               onValueChange={(value) => setCurrentMonth(value[0])}
               min={1}
-              max={36}
+              max={21}
               step={1}
               className="w-full"
             />
 
             <div className="flex justify-between text-xs text-gray-500">
-              <span>Jan 2022</span>
-              <span>2022</span>
-              <span>2023</span>
-              <span>2024</span>
-              <span>Dec 2024</span>
+              <span>Jun 2025</span>
+              <span>2026</span>
+              <span>2027</span>
+              <span>2028</span>
+              <span>2029</span>
+              <span>Jun 2030</span>
             </div>
           </div>
         </CardContent>

@@ -8,7 +8,7 @@ interface ProvinceState {
 }
 
 export const useProvinceStore = create<ProvinceState>((set) => ({
-  currentMonth: 36, // Initial month (Dec 2024)
+  currentMonth: 1, // Start at the beginning of the timeline (Jun 2025)
   isMapReady: false,
   setCurrentMonth: (month) => set({ currentMonth: month }),
   setIsMapReady: (isReady) => set({ isMapReady: isReady }),

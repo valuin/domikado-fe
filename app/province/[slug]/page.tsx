@@ -10,7 +10,12 @@ import {
 import ProvinceHeader from "@/app/components/Province/ProvinceHeader";
 import CurrentSituationSection from "@/app/components/Province/CurrentSituationSection";
 import InterventionRecommendationsSection from "@/app/components/Province/InterventionRecommendationsSection";
-import ProvinceDetailMap from "@/app/components/Province/ProvinceDetailMap";
+import dynamic from 'next/dynamic';
+
+const ProvinceDetailMap = dynamic(
+  () => import("@/app/components/Province/ProvinceDetailMap"),
+  { ssr: false }
+);
 import InterventionTimelineSection from "@/app/components/Province/InterventionTimelineSection";
 import { Users, Heart, Building } from "lucide-react";
 import { useProvince } from "@/app/hooks/use-province";

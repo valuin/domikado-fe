@@ -62,18 +62,18 @@ const isPointInPolygon = (
   return inside;
 };
 
-// Monthly intensity calculation for 3 years (36 months)
-const getMonthlyIntensityMultiplier = (
-  month: number
+// Quarterly intensity calculation for 5 years (20 quarters)
+const getQuarterlyIntensityMultiplier = (
+  quarter: number
 ): { base: number; variance: number } => {
-  // Month 1 = January 2022 (start), Month 36 = December 2024 (end)
+  // Quarter 1 = Q2 2025 (start), Quarter 21 = Q2 2030 (end)
   // Create gradual improvement from high intensity (bad) to low intensity (good)
 
-  // Linear decrease from 90 to 15 over 36 months
-  const baseIntensity = Math.max(15, 90 - (month - 1) * (75 / 35));
+  // Linear decrease from 100 (bad) to 10 (good) over 20 quarters
+  const baseIntensity = Math.max(10, 100 - (quarter - 1) * (90 / 20));
 
   // Variance decreases as situation stabilizes
-  const variance = Math.max(8, 20 - (month - 1) * (12 / 35));
+  const variance = Math.max(5, 25 - (quarter - 1) * (20 / 20));
 
   return {
     base: Math.round(baseIntensity),
@@ -154,21 +154,18 @@ const generateFixedLocations = (
 // Function to generate consistent heatmap points with time-varying intensity
 const generateTimeSeriesHeatmapPoints = (
   feature: Feature,
-  month: number,
+  quarter: number,
   fixedLocations?: [number, number][]
 ): [number, number, number][] => {
   // Generate fixed locations if not provided
   const locations = fixedLocations || generateFixedLocations(feature, 45);
 
-  // Get month-specific intensity parameters
-  const { base, variance } = getMonthlyIntensityMultiplier(month);
+  // Get quarter-specific intensity parameters
+  const { base, variance } = getQuarterlyIntensityMultiplier(quarter);
 
   // Apply time-varying intensity to fixed locations
   return locations.map(([lat, lng], index) => {
-    // Calculate intensity that decreases by 200 each month, starting from 5000
-    const baseIntensity = 5000 - (month - 1) * 200;
-
-    // Add some location-specific variation (±50) for visual variety
+    // Use a seeded random to ensure consistent variation for each point
     const locationSeed = 12345 + index * 67;
     let seedValue = locationSeed;
     const seededRandom = () => {
@@ -176,13 +173,15 @@ const generateTimeSeriesHeatmapPoints = (
       return seedValue / 233280;
     };
 
-    const locationVariance = (seededRandom() - 0.5) * 100; // ±50 variation
-    const intensity = Math.max(100, baseIntensity + locationVariance); // Minimum 100
+    // Calculate intensity with some random variation
+    const randomFactor = (seededRandom() - 0.5) * variance;
+    const intensity = Math.max(10, base + randomFactor);
 
-    console.log(intensity);
     return [lat, lng, intensity] as [number, number, number];
   });
 };
+
+
 
 // Custom Hook for Time-Series Heatmap with Province Boundary Clipping
 const useTimeSeriesHeatmap = (
@@ -207,87 +206,82 @@ const useTimeSeriesHeatmap = (
     const map = mapRef.current;
     const provinceFeature = provinceData.features[0];
 
-    // Generate fixed locations only once per province
+    // Generate fixed locations only once
     if (!fixedLocationsRef.current) {
       fixedLocationsRef.current = generateFixedLocations(provinceFeature, 45);
     }
 
-    // Remove existing heatmap
-    if (heatLayerRef.current) {
-      try {
-        map.removeLayer(heatLayerRef.current);
-      } catch (e) {
-        console.log("Heatmap layer already removed");
-      }
+    // Create and add the heatmap layer only once
+    if (!heatLayerRef.current && fixedLocationsRef.current) {
+      const initialHeatmapPoints = generateTimeSeriesHeatmapPoints(
+        provinceFeature,
+        currentMonth,
+        fixedLocationsRef.current
+      );
+
+      const heatmapOptions = {
+        radius: 40,
+        blur: 30,
+        maxZoom: 17,
+        max: 125,
+        gradient: {
+          0.1: "#2dc937", // green
+          0.4: "#ffdd00", // yellow
+          0.7: "#ff8c00", // dark orange
+          1.0: "#ff4500", // orange red
+        },
+        minOpacity: 0.4,
+      };
+
+      heatLayerRef.current = L.heatLayer(initialHeatmapPoints, heatmapOptions).addTo(map);
     }
 
-    // Generate time-series points with consistent locations but varying intensity
+    // Cleanup function to remove the layer when the component unmounts
+    return () => {
+      if (heatLayerRef.current && map) {
+        map.removeLayer(heatLayerRef.current);
+        heatLayerRef.current = null;
+      }
+    };
+  }, [mapRef, provinceData, isMapReady]); // Removed currentMonth from dependencies
+
+  // This effect will run only when `currentMonth` changes
+  useEffect(() => {
+    if (
+      !heatLayerRef.current ||
+      !provinceData ||
+      provinceData.features.length === 0 ||
+      !fixedLocationsRef.current
+    ) {
+      return;
+    }
+
+    // 1. Generate new points with updated intensity for the current month
+    const provinceFeature = provinceData.features[0];
     const heatmapPoints = generateTimeSeriesHeatmapPoints(
       provinceFeature,
       currentMonth,
       fixedLocationsRef.current
     );
+    // 2. Update the heatmap layer with the new data points
+    (heatLayerRef.current as any).setLatLngs(heatmapPoints);
 
-    // Debug: Log intensity values for current month
-    const intensities = heatmapPoints.map((point) => point[2]);
-    const avgIntensity =
-      intensities.reduce((sum, i) => sum + i, 0) / intensities.length;
-    const minIntensity = Math.min(...intensities);
-    const maxIntensity = Math.max(...intensities);
+    // 3. Calculate new opacity to make the layer fade over time
+    // Opacity will range from 0.7 (start) to 0.2 (end)
+    const maxMonth = 21;
+    const minMonth = 1;
+    const startOpacity = 0.7;
+    const endOpacity = 0.2;
 
-    console.log(
-      `Month ${currentMonth}: Avg=${avgIntensity.toFixed(
-        0
-      )}, Min=${minIntensity.toFixed(0)}, Max=${maxIntensity.toFixed(0)}`
-    );
-    console.log(
-      `Expected base for month ${currentMonth}: ${
-        5000 - (currentMonth - 1) * 200
-      }`
-    );
+    const newOpacity =
+      startOpacity -
+      ((currentMonth - minMonth) / (maxMonth - minMonth)) *
+        (startOpacity - endOpacity);
 
-    // Create heatmap layer with proper gradient (lower intensity = better = green)
-    const heatmapOptions = {
-      radius: 40,
-      blur: 30,
-      maxZoom: 17,
-      max: 5100, // Adjusted to match our new intensity range (5000 + variance)
-      gradient: {
-        0.0: "#00ff00", // Green (Low intensity = Excellent)
-        0.2: "#66ff00", // Light Green
-        0.3: "#ccff00", // Yellow-Green
-        0.4: "#ffff00", // Yellow (Medium)
-        0.5: "#ffcc00", // Orange-Yellow
-        0.6: "#ff9900", // Orange
-        0.7: "#ff6600", // Dark Orange
-        0.8: "#ff3300", // Red-Orange
-        0.9: "#ff1100", // Dark Red
-        1.0: "#ff0000", // Red (Needs Attention)
-      },
-      minOpacity: 0.4,
-    };
+    // 4. Update the heatmap layer's options with the new opacity
+    (heatLayerRef.current as any).setOptions({ minOpacity: newOpacity });
 
-    try {
-      heatLayerRef.current = L.heatLayer(heatmapPoints, heatmapOptions);
-      heatLayerRef.current.addTo(map);
-
-      console.log(
-        `Time-series heatmap created with ${heatmapPoints.length} points for month ${currentMonth}`
-      );
-    } catch (error) {
-      console.error("Error creating heatmap:", error);
-    }
-
-    return () => {
-      if (heatLayerRef.current && map) {
-        try {
-          map.removeLayer(heatLayerRef.current);
-        } catch (e) {
-          console.log("Cleanup error:", e);
-        }
-      }
-    };
-  }, [mapRef, provinceData, isMapReady, currentMonth]);
+  }, [currentMonth, provinceData]);
 
   return heatLayerRef.current;
 };
@@ -331,7 +325,7 @@ const ProvinceDetailMap = ({ provinceName }: ProvinceDetailMapProps) => {
         setMapCenter(center);
 
         if (filteredData[0].properties?.provinsi == provinceName) {
-          setMapZoom(10);
+          setMapZoom(11);
         } else {
           setMapZoom(5);
         }
@@ -410,9 +404,8 @@ const ProvinceDetailMap = ({ provinceName }: ProvinceDetailMapProps) => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-
               <GeoJSON
-                key="provinces"
+                key={`provinces-${currentMonth}`}
                 data={geoJsonData}
                 style={{
                   fillColor: "rgb(0,0,0)",
