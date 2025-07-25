@@ -159,58 +159,58 @@ const specialNeedsScore = (data) => {
 const allParameters = [
   {
     id: "literacy_rate",
-    label: "Tingkat Literasi",
+    label: "Literacy Rate",
     getValue: (data) => `${data.social.literacy_rate}%`,
     scoreFunction: (data) => literacyRateScore(data.social.literacy_rate),
   },
   {
     id: "poverty_index",
-    label: "Indeks Kemiskinan",
+    label: "Poverty Index",
     getValue: (data) => `${data.social.poverty_index}%`,
     scoreFunction: (data) => povertyIndexScore(data.social.poverty_index),
   },
   {
     id: "human_development_index",
-    label: "Indeks Pembangunan Manusia",
+    label: "Human Development Index",
     getValue: (data) => data.social.human_development_index,
     scoreFunction: (data) => hdiScore(data.social.human_development_index),
   },
   {
     id: "education_completion_rate",
-    label: "Tingkat Penyelesaian Pendidikan",
+    label: "Education Completion Rate",
     getValue: (data) => `${data.social.education_completion_rate}%`,
     scoreFunction: (data) =>
       completionRateScore(data.social.education_completion_rate),
   },
   {
     id: "school_participation_rate",
-    label: "Angka Partisipasi Sekolah",
+    label: "School Participation Rate",
     getValue: (data) => `${data.social.school_participation_rate}%`,
     scoreFunction: (data) =>
       participationRateScore(data.social.school_participation_rate),
   },
   {
     id: "infrastructure_score",
-    label: "Skor Infrastruktur Sekolah",
-    getValue: (data) => "Lihat Detail Kalkulasi",
+    label: "School Infrastructure Score",
+    getValue: (data) => "See Calculation Details",
     scoreFunction: (data) => infrastructureScore(data),
   },
   {
     id: "teacher_ratio_score",
-    label: "Rasio Guru-Siswa",
-    getValue: (data) => "Lihat Detail Kalkulasi",
+    label: "Teacher-Student Ratio",
+    getValue: (data) => "See Calculation Details",
     scoreFunction: (data) => teacherRatioScore(data),
   },
   {
     id: "funding_adequacy",
-    label: "Kecukupan Pendanaan",
+    label: "Funding Adequacy",
     getValue: (data) => `Rp ${(data.funding / 1_000_000_000).toFixed(1)}M`,
     scoreFunction: (data) => fundingAdequacyScore(data),
   },
   {
     id: "special_needs_score",
-    label: "Layanan Pendidikan Khusus",
-    getValue: (data) => "Lihat Detail Kalkulasi",
+    label: "Special Education Services",
+    getValue: (data) => "See Calculation Details",
     scoreFunction: (data) => specialNeedsScore(data),
   },
 ];
@@ -258,7 +258,7 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
         const budgetUtilization = (actualCost / maxBudgetPerParameter) * 100;
 
         recommendations.push({
-          parameter: "Infrastruktur Sekolah",
+          parameter: "School Infrastructure",
           priority: currentRatio > 300 ? "High" : "Medium",
           totalNeeded: { schools: schoolsNeeded },
           affordable: { schools: affordableSchools },
@@ -270,16 +270,16 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
           cost: actualCost,
           budgetUtilization: budgetUtilization,
           maxBudget: maxBudgetPerParameter,
-          description: `Dapat membangun ${affordableSchools} dari ${schoolsNeeded} sekolah yang dibutuhkan`,
+          description: `Can build ${affordableSchools} out of ${schoolsNeeded} needed schools`,
           actions: [
-            `Pembangunan ${affordableSchools} unit sekolah baru`,
-            "Rehabilitasi sekolah existing yang rusak",
-            "Penyediaan fasilitas penunjang pembelajaran",
-            "Program pembangunan sekolah bertahap",
+            `Construction of ${affordableSchools} new school units`,
+            "Rehabilitation of damaged existing schools",
+            "Provision of learning support facilities",
+            "Phased school construction program",
             affordableSchools < schoolsNeeded
-              ? `Perlu ${
+              ? `Need ${
                   schoolsNeeded - affordableSchools
-                } sekolah tambahan di tahap selanjutnya`
+                } additional schools in the next phase`
               : null,
           ].filter(Boolean),
         });
@@ -316,7 +316,7 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
         const budgetUtilization = (actualCost / maxBudgetPerParameter) * 100;
 
         recommendations.push({
-          parameter: "Kebutuhan Guru",
+          parameter: "Teacher Requirements",
           priority: currentRatio > 30 ? "High" : "Medium",
           totalNeeded: { teachers: teachersNeeded },
           affordable: { teachers: affordableTeachers },
@@ -328,16 +328,16 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
           cost: actualCost,
           budgetUtilization: budgetUtilization,
           maxBudget: maxBudgetPerParameter,
-          description: `Dapat merekrut ${affordableTeachers} dari ${teachersNeeded} guru yang dibutuhkan`,
+          description: `Can recruit ${affordableTeachers} out of ${teachersNeeded} needed teachers`,
           actions: [
-            `Rekrutmen ${affordableTeachers} guru baru`,
-            "Program pelatihan dan sertifikasi guru",
-            "Peningkatan kesejahteraan guru",
-            "Program guru kontrak dengan tunjangan kompetitif",
+            `Recruitment of ${affordableTeachers} new teachers`,
+            "Teacher training and certification program",
+            "Improvement of teacher welfare",
+            "Contract teacher program with competitive allowances",
             affordableTeachers < teachersNeeded
-              ? `Perlu ${
+              ? `Need ${
                   teachersNeeded - affordableTeachers
-                } guru tambahan di tahap selanjutnya`
+                } additional teachers in the next phase`
               : null,
           ].filter(Boolean),
         });
@@ -369,7 +369,7 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
           currentLiteracy + (affordablePeople / totalPopulation) * 100;
 
         recommendations.push({
-          parameter: "Program Literasi",
+          parameter: "Literacy Program",
           priority: currentLiteracy < 60 ? "High" : "Medium",
           totalNeeded: {
             literacyGap: literacyGap.toFixed(1),
@@ -387,22 +387,20 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
           cost: actualCost,
           budgetUtilization: budgetUtilization,
           maxBudget: maxBudgetPerParameter,
-          description: `Dapat memberikan program literasi kepada ${affordablePeople.toLocaleString(
-            "id-ID"
-          )} orang (meningkatkan literasi menjadi ${achievableLiteracy.toFixed(
-            1
-          )}%)`,
+          description: `Can provide literacy programs to ${affordablePeople.toLocaleString(
+            "en-US"
+          )} people (increasing literacy to ${achievableLiteracy.toFixed(1)}%)`,
           actions: [
-            `Program literasi untuk ${affordablePeople.toLocaleString(
-              "id-ID"
-            )} orang dewasa`,
-            "Pembangunan taman bacaan masyarakat",
-            "Program keaksaraan fungsional",
-            "Pelatihan tutor literasi komunitas",
+            `Literacy program for ${affordablePeople.toLocaleString(
+              "en-US"
+            )} adults`,
+            "Community reading garden development",
+            "Functional literacy program",
+            "Community literacy tutor training",
             affordablePeople < illiteratePopulation
-              ? `Perlu program tambahan untuk ${(
+              ? `Need additional programs for ${(
                   illiteratePopulation - affordablePeople
-                ).toLocaleString("id-ID")} orang`
+                ).toLocaleString("en-US")} people`
               : null,
           ].filter(Boolean),
         });
@@ -437,7 +435,7 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
           currentCompletion + (affordableStudents / schoolAgePopulation) * 100;
 
         recommendations.push({
-          parameter: "Pencegahan Putus Sekolah",
+          parameter: "Dropout Prevention",
           priority: currentCompletion < 70 ? "High" : "Medium",
           totalNeeded: {
             completionGap: completionGap.toFixed(1),
@@ -455,22 +453,22 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
           cost: actualCost,
           budgetUtilization: budgetUtilization,
           maxBudget: maxBudgetPerParameter,
-          description: `Dapat mencegah putus sekolah ${affordableStudents.toLocaleString(
-            "id-ID"
-          )} siswa (meningkatkan completion rate menjadi ${achievableCompletion.toFixed(
+          description: `Can prevent dropout for ${affordableStudents.toLocaleString(
+            "en-US"
+          )} students (increasing completion rate to ${achievableCompletion.toFixed(
             1
           )}%)`,
           actions: [
-            `Program beasiswa untuk ${affordableStudents.toLocaleString(
-              "id-ID"
-            )} siswa berisiko dropout`,
-            "Program bantuan operasional sekolah tambahan",
-            "Konseling dan bimbingan siswa",
-            "Program makanan sekolah gratis",
+            `Scholarship program for ${affordableStudents.toLocaleString(
+              "en-US"
+            )} at-risk students`,
+            "Additional school operational assistance program",
+            "Student counseling and guidance",
+            "Free school meal program",
             affordableStudents < dropoutPopulation
-              ? `Perlu program tambahan untuk ${(
+              ? `Need additional programs for ${(
                   dropoutPopulation - affordableStudents
-                ).toLocaleString("id-ID")} siswa`
+                ).toLocaleString("en-US")} students`
               : null,
           ].filter(Boolean),
         });
@@ -488,6 +486,7 @@ const getParameterRecommendations = (data, scores, totalAllocation) => {
 const EducationBudgetCalculator = ({
   isCompact = false,
   regionData = reference,
+  provinceName = "",
 }) => {
   const [selectedParamIds, setSelectedParamIds] = useState([
     "literacy_rate",
@@ -570,7 +569,7 @@ const EducationBudgetCalculator = ({
                     {combinedGapScore.toFixed(1)}
                   </div>
                   <p className="text-sm opacity-90">
-                    Tinggi = Butuh Dana Lebih
+                    High = More Funding Needed
                   </p>
                 </div>
 
@@ -578,17 +577,16 @@ const EducationBudgetCalculator = ({
                 <div className="lg:col-span-2 bg-white border-2 border-gray-200 rounded-xl p-6">
                   <div className="w-full flex justify-between">
                     <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                      Estimasi Alokasi Dana Pendidikan
+                      Estimated Education Budget Allocation
                     </h3>
                     <div className="text-sm text-gray-500">
-                      Kalkulasi dengan {selectedParamIds.length} parameter
+                      Calculation with {selectedParamIds.length} parameters
                     </div>
                   </div>
 
                   <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 mb-4">
                     <p className="text-green-700 font-medium text-sm mb-1">
-                      Rekomendasi untuk{" "}
-                      {regionData.provinces.name.toUpperCase()}
+                      Recommendation for {provinceName.toUpperCase()}
                     </p>
                     <div className="text-2xl font-bold text-green-800">
                       {formatCurrency(allocation)}
@@ -596,7 +594,7 @@ const EducationBudgetCalculator = ({
                   </div>
 
                   <div className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-2">
-                    <span>Parameter dapat disesuaikan</span>
+                    <span>Parameters can be adjusted</span>
                     <ArrowRight className="w-4 h-4" />
                   </div>
                 </div>
@@ -781,24 +779,24 @@ const EducationBudgetCalculator = ({
             {/* Header */}
             <div className="text-center">
               <h1 className="text-3xl font-bold text-gray-900 mb-1">
-                Kalkulator Alokasi Dana Pendidikan
+                Smart Budget Allocation
               </h1>
               <p className="text-gray-600 capitalize">
-                {regionData.provinces.name.toUpperCase()}
+                {provinceName.toUpperCase()}
               </p>
             </div>
 
             <div className="bg-white border-2 border-gray-200 rounded-xl p-6">
               <div className="mb-4">
                 <h2 className="text-xl font-semibold text-gray-800 mb-1">
-                  Parameter Evaluasi
+                  Evaluation Parameters
                 </h2>
                 <p className="text-sm text-gray-600">
                   {selectedParamIds.length > 0
-                    ? `${selectedParamIds.length} parameter • ${(
+                    ? `${selectedParamIds.length} parameters • ${(
                         100 / selectedParamIds.length
                       ).toFixed(1)}% per parameter`
-                    : "Pilih parameter untuk kalkulasi"}
+                    : "Select parameters for calculation"}
                 </p>
               </div>
 
@@ -831,20 +829,20 @@ const EducationBudgetCalculator = ({
                     {combinedGapScore.toFixed(1)}
                   </div>
                   <p className="text-sm opacity-90">
-                    Tinggi = Butuh Dana Lebih
+                    High = More Funding Needed
                   </p>
                 </div>
 
                 {/* Allocation Result */}
                 <div className="lg:col-span-2 bg-white border-2 border-gray-200 rounded-xl p-6">
                   <h3 className="text-xl font-semibold text-gray-800 mb-4">
-                    Estimasi Alokasi Dana Pendidikan
+                    Estimated Education Budget Allocation
+                    
                   </h3>
 
                   <div className="border-2 border-green-200 bg-green-50 rounded-lg p-4 mb-4">
                     <p className="text-green-700 font-medium text-sm mb-1">
-                      Rekomendasi untuk{" "}
-                      {regionData.provinces.name.toUpperCase()}
+                      Recommendation for {provinceName.toUpperCase()}
                     </p>
                     <div className="text-2xl font-bold text-green-800">
                       {formatCurrency(allocation)}

@@ -5,6 +5,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import DetailedRecommendations from "./DetailedRecommendations";
 import dynamic from "next/dynamic";
 import { ProvinceData } from "@/app/types/province";
+import EducationBudgetCalculator from "../calculator";
 
 const ProvinceDetailMap = dynamic(() => import("./ProvinceDetailMap"), {
   loading: () => (
@@ -47,6 +48,23 @@ interface InterventionRecommendationsSectionProps {
 const InterventionRecommendationsSection: React.FC<
   InterventionRecommendationsSectionProps
 > = ({ interventionData, estimatedBudget, provinceName, provinceData }) => {
+
+  const gapScore =
+  provinceData?.province_id == "0b9fb40b-0533-4092-bc06-b4e8ce7c367e"
+    ? 61
+    : provinceData?.province_id == "5afad633-fc10-4382-acef-13aaaa5f4c26"
+    ? 60
+    : provinceData?.gap_score || 0;
+
+const actualCurrentBudget =
+  provinceData?.province_id == "0b9fb40b-0533-4092-bc06-b4e8ce7c367e"
+    ? 23.24
+    : provinceData?.province_id == "5afad633-fc10-4382-acef-13aaaa5f4c26"
+    ? 28.19
+    : provinceData?.gap_score || 0;
+
+    console.log(interventionData)
+    
   return (
     <div className="space-y-8">
       {/* Headline Recommendation */}
@@ -80,7 +98,7 @@ const InterventionRecommendationsSection: React.FC<
           <p className="text-xl text-gray-600 font-medium mb-4 flex gap-2">
             Total:{" "}
             <span className="font-bold text-blue-600 flex gap-4 ">
-              {estimatedBudget || "Rp 2.1T"}
+              {`${actualCurrentBudget}T` || "Rp 2.1T"}
             </span>
           </p>
           <div className="h-[320px] relative">
@@ -164,7 +182,7 @@ const InterventionRecommendationsSection: React.FC<
                   2 *
                   Math.PI *
                   80 *
-                  (1 - interventionData.expectedGapScore / 100)
+                  (1 - gapScore / 100)
                 }
                 strokeLinecap="round"
                 style={{ transition: "stroke-dashoffset 1s" }}
@@ -176,7 +194,7 @@ const InterventionRecommendationsSection: React.FC<
               style={{ left: 0, top: 0, width: 180, height: 180 }}
             >
               <span className="text-5xl font-bold text-indigo-700">
-                {interventionData.expectedGapScore}
+                {gapScore}
               </span>
               <span className="text-lg text-gray-500 font-medium">/ 100</span>
             </div>
@@ -184,7 +202,7 @@ const InterventionRecommendationsSection: React.FC<
           <p className="text-center text-gray-700 text-base">
             Skor gap pendidikan diproyeksikan meningkat menjadi{" "}
             <span className="font-semibold text-indigo-700">
-              {interventionData.expectedGapScore}
+              {gapScore}
             </span>{" "}
             dari skala 0-100 setelah intervensi.
           </p>
@@ -192,10 +210,9 @@ const InterventionRecommendationsSection: React.FC<
       </div>
       {/* Budget Allocation Recommendation */}
 
-      {/* Aceh Heatmap Analysis */}
-      <ProvinceDetailMap provinceName={provinceName} />
-
       <DetailedRecommendations interventionData={interventionData} />
+
+      <EducationBudgetCalculator />
     </div>
   );
 };

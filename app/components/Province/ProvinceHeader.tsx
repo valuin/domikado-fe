@@ -38,7 +38,7 @@ const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Kembali
+                Back
               </Button>
               <div className="flex items-center gap-3">
                 <MapPin className="w-6 h-6 text-primary" />
@@ -61,7 +61,7 @@ const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">
-                  Total Siswa
+                  Total Students
                 </h2>
               </div>
               <p className="text-2xl font-bold text-primary">
@@ -72,7 +72,7 @@ const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <GraduationCap className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">
-                  Total Guru
+                  Total Teachers
                 </h2>
               </div>
               <p className="text-2xl font-bold text-primary">
@@ -83,7 +83,7 @@ const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({
               <div className="flex items-center gap-2">
                 <School className="h-5 w-5 text-primary" />
                 <h2 className="text-lg font-semibold text-foreground">
-                  Total Sekolah
+                  Total Schools
                 </h2>
               </div>
               <p className="text-2xl font-bold text-primary">

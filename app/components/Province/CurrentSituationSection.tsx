@@ -110,7 +110,16 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
 }) => {
   const gapScore =
     provinceData?.province_id == "0b9fb40b-0533-4092-bc06-b4e8ce7c367e"
-      ? 24
+      ? 61
+      : provinceData?.province_id == "5afad633-fc10-4382-acef-13aaaa5f4c26"
+      ? 74
+      : provinceData?.gap_score || 0;
+
+  const actualCurrentBudget =
+    provinceData?.province_id == "0b9fb40b-0533-4092-bc06-b4e8ce7c367e"
+      ? 91.43
+      : provinceData?.province_id == "5afad633-fc10-4382-acef-13aaaa5f4c26"
+      ? 23.24
       : provinceData?.gap_score || 0;
 
   const teacherReq = calculateTeacherRequirements(provinceData!);
@@ -182,7 +191,7 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
           <p className="text-xl text-gray-600 font-medium mb-4 flex gap-2">
             Total:{" "}
             <span className="font-bold text-blue-600 flex gap-4 ">
-              {currentBudget || "Rp 2.1T"}
+              {`${actualCurrentBudget}T` || "Rp 2.1T"}
             </span>
           </p>
           <div className="h-[320px] relative">
@@ -318,7 +327,7 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
       {/* Ratio Analysis Section */}
       {provinceData && <RatioAnalysis provinceData={provinceData} />}
 
-      <BudgetCalculator />
+
 
       {/* General Data Section */}
       {/* <div className="grid grid-cols-2 gap-6">

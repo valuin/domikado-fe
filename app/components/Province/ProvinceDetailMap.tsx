@@ -2,11 +2,9 @@ import { fetchAllProvinceJson } from "@/lib/utils";
 import { FeatureCollection, Feature } from "geojson";
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
-import { Slider } from "@/app/components/ui/slider";
-import { Button } from "@/app/components/ui/button";
-import { Calendar, TrendingDown, TrendingUp, Plus, Minus } from "lucide-react";
 import L from "leaflet";
 import "leaflet.heat";
+import { useProvinceStore } from "@/app/store/provinceStore";
 
 declare global {
   namespace L {
@@ -64,18 +62,18 @@ const isPointInPolygon = (
   return inside;
 };
 
-// Monthly intensity calculation for 3 years (36 months)
-const getMonthlyIntensityMultiplier = (
-  month: number
+// Quarterly intensity calculation for 5 years (20 quarters)
+const getQuarterlyIntensityMultiplier = (
+  quarter: number
 ): { base: number; variance: number } => {
-  // Month 1 = January 2022 (start), Month 36 = December 2024 (end)
+  // Quarter 1 = Q2 2025 (start), Quarter 21 = Q2 2030 (end)
   // Create gradual improvement from high intensity (bad) to low intensity (good)
 
-  // Linear decrease from 90 to 15 over 36 months
-  const baseIntensity = Math.max(15, 90 - (month - 1) * (75 / 35));
+  // Linear decrease from 100 (bad) to 10 (good) over 20 quarters
+  const baseIntensity = Math.max(10, 100 - (quarter - 1) * (90 / 20));
 
   // Variance decreases as situation stabilizes
-  const variance = Math.max(8, 20 - (month - 1) * (12 / 35));
+  const variance = Math.max(5, 25 - (quarter - 1) * (20 / 20));
 
   return {
     base: Math.round(baseIntensity),
@@ -156,17 +154,18 @@ const generateFixedLocations = (
 // Function to generate consistent heatmap points with time-varying intensity
 const generateTimeSeriesHeatmapPoints = (
   feature: Feature,
-  month: number,
-  fixedLocations?: [number, number][],
-  intensityMultiplier: number = 1
+  quarter: number,
+  fixedLocations?: [number, number][]
 ): [number, number, number][] => {
+  // Generate fixed locations if not provided
   const locations = fixedLocations || generateFixedLocations(feature, 45);
 
-  const { base, variance } = getMonthlyIntensityMultiplier(month);
+  // Get quarter-specific intensity parameters
+  const { base, variance } = getQuarterlyIntensityMultiplier(quarter);
 
+  // Apply time-varying intensity to fixed locations
   return locations.map(([lat, lng], index) => {
-    const baseIntensity = 5000 - (month - 1) * 200;
-
+    // Use a seeded random to ensure consistent variation for each point
     const locationSeed = 12345 + index * 67;
     let seedValue = locationSeed;
     const seededRandom = () => {
@@ -174,23 +173,22 @@ const generateTimeSeriesHeatmapPoints = (
       return seedValue / 233280;
     };
 
-    const locationVariance = (seededRandom() - 0.5) * 100; // ±50 variation
-    const intensity = Math.max(
-      100,
-      (baseIntensity + locationVariance) * intensityMultiplier
-    ); // Apply multiplier
+    // Calculate intensity with some random variation
+    const randomFactor = (seededRandom() - 0.5) * variance;
+    const intensity = Math.max(10, base + randomFactor);
 
     return [lat, lng, intensity] as [number, number, number];
   });
 };
+
+
 
 // Custom Hook for Time-Series Heatmap with Province Boundary Clipping
 const useTimeSeriesHeatmap = (
   mapRef: React.RefObject<any>,
   provinceData: FeatureCollection | null,
   isMapReady: boolean,
-  currentMonth: number,
-  intensityMultiplier: number
+  currentMonth: number
 ) => {
   const heatLayerRef = useRef<any>(null);
   const fixedLocationsRef = useRef<[number, number][] | null>(null);
@@ -208,240 +206,98 @@ const useTimeSeriesHeatmap = (
     const map = mapRef.current;
     const provinceFeature = provinceData.features[0];
 
-    // Generate fixed locations only once per province
+    // Generate fixed locations only once
     if (!fixedLocationsRef.current) {
       fixedLocationsRef.current = generateFixedLocations(provinceFeature, 45);
     }
 
-    // Remove existing heatmap
-    if (heatLayerRef.current) {
-      try {
-        map.removeLayer(heatLayerRef.current);
-      } catch (e) {
-        console.log("Heatmap layer already removed");
-      }
+    // Create and add the heatmap layer only once
+    if (!heatLayerRef.current && fixedLocationsRef.current) {
+      const initialHeatmapPoints = generateTimeSeriesHeatmapPoints(
+        provinceFeature,
+        currentMonth,
+        fixedLocationsRef.current
+      );
+
+      const heatmapOptions = {
+        radius: 40,
+        blur: 30,
+        maxZoom: 17,
+        max: 125,
+        gradient: {
+          0.1: "#2dc937", // green
+          0.4: "#ffdd00", // yellow
+          0.7: "#ff8c00", // dark orange
+          1.0: "#ff4500", // orange red
+        },
+        minOpacity: 0.4,
+      };
+
+      heatLayerRef.current = L.heatLayer(initialHeatmapPoints, heatmapOptions).addTo(map);
     }
 
-    // Generate time-series points with consistent locations but varying intensity
+    // Cleanup function to remove the layer when the component unmounts
+    return () => {
+      if (heatLayerRef.current && map) {
+        map.removeLayer(heatLayerRef.current);
+        heatLayerRef.current = null;
+      }
+    };
+  }, [mapRef, provinceData, isMapReady]); // Removed currentMonth from dependencies
+
+  // This effect will run only when `currentMonth` changes
+  useEffect(() => {
+    if (
+      !heatLayerRef.current ||
+      !provinceData ||
+      provinceData.features.length === 0 ||
+      !fixedLocationsRef.current
+    ) {
+      return;
+    }
+
+    // 1. Generate new points with updated intensity for the current month
+    const provinceFeature = provinceData.features[0];
     const heatmapPoints = generateTimeSeriesHeatmapPoints(
       provinceFeature,
       currentMonth,
-      fixedLocationsRef.current,
-      intensityMultiplier
+      fixedLocationsRef.current
     );
+    // 2. Update the heatmap layer with the new data points
+    (heatLayerRef.current as any).setLatLngs(heatmapPoints);
 
-    // Debug: Log intensity values for current month
-    const intensities = heatmapPoints.map((point) => point[2]);
-    const avgIntensity =
-      intensities.reduce((sum, i) => sum + i, 0) / intensities.length;
-    const minIntensity = Math.min(...intensities);
-    const maxIntensity = Math.max(...intensities);
+    // 3. Calculate new opacity to make the layer fade over time
+    // Opacity will range from 0.7 (start) to 0.2 (end)
+    const maxMonth = 21;
+    const minMonth = 1;
+    const startOpacity = 0.7;
+    const endOpacity = 0.2;
 
-    console.log(
-      `Month ${currentMonth}: Avg=${avgIntensity.toFixed(
-        0
-      )}, Min=${minIntensity.toFixed(0)}, Max=${maxIntensity.toFixed(0)}`
-    );
-    console.log(
-      `Expected base for month ${currentMonth}: ${
-        5000 - (currentMonth - 1) * 200
-      }`
-    );
+    const newOpacity =
+      startOpacity -
+      ((currentMonth - minMonth) / (maxMonth - minMonth)) *
+        (startOpacity - endOpacity);
 
-    // Create heatmap layer with proper gradient (lower intensity = better = green)
-    const heatmapOptions = {
-      radius: 40,
-      blur: 30,
-      maxZoom: 17,
-      max: 5100, // Adjusted to match our new intensity range (5000 + variance)
-      gradient: {
-        0.0: "#00ff00", // Green (Low intensity = Excellent)
-        0.2: "#66ff00", // Light Green
-        0.3: "#ccff00", // Yellow-Green
-        0.4: "#ffff00", // Yellow (Medium)
-        0.5: "#ffcc00", // Orange-Yellow
-        0.6: "#ff9900", // Orange
-        0.7: "#ff6600", // Dark Orange
-        0.8: "#ff3300", // Red-Orange
-        0.9: "#ff1100", // Dark Red
-        1.0: "#ff0000", // Red (Needs Attention)
-      },
-      minOpacity: 0.4,
-    };
+    // 4. Update the heatmap layer's options with the new opacity
+    (heatLayerRef.current as any).setOptions({ minOpacity: newOpacity });
 
-    try {
-      heatLayerRef.current = L.heatLayer(heatmapPoints, heatmapOptions);
-      heatLayerRef.current.addTo(map);
-
-      console.log(
-        `Time-series heatmap created with ${heatmapPoints.length} points for month ${currentMonth}`
-      );
-    } catch (error) {
-      console.error("Error creating heatmap:", error);
-    }
-
-    return () => {
-      if (heatLayerRef.current && map) {
-        try {
-          map.removeLayer(heatLayerRef.current);
-        } catch (e) {
-          console.log("Cleanup error:", e);
-        }
-      }
-    };
-  }, [mapRef, provinceData, isMapReady, currentMonth, intensityMultiplier]);
+  }, [currentMonth, provinceData]);
 
   return heatLayerRef.current;
 };
+
 
 interface ProvinceProperties {
   provinsi: string;
   [key: string]: any;
 }
 
-// Monthly narration data for 3 years (36 months)
-const getMonthlyNarration = (
-  month: number
-): {
-  title: string;
-  description: string;
-  trend: "up" | "down";
-  year: number;
-  monthName: string;
-} => {
-  const year = Math.floor((month - 1) / 12) + 2022;
-  const monthIndex = (month - 1) % 12;
-  const monthNames = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
-  const monthName = monthNames[monthIndex];
+interface ProvinceDetailMapProps {
+  provinceName: string;
+}
 
-  // Create quarterly milestones for better narrative flow
-  const quarter = Math.floor((month - 1) / 3) + 1;
-
-  type PhaseData = {
-    phase: "baseline" | "planning" | "early" | "accelerated" | "transformation";
-    title: string;
-    trend: "up" | "down";
-  };
-
-  const narrativePhases: Record<number, PhaseData> = {
-    // Months 1-6: Critical baseline period
-    1: {
-      phase: "baseline",
-      title: "Baseline Assessment - Critical Situation",
-      trend: "down",
-    },
-    2: {
-      phase: "baseline",
-      title: "Initial Data Collection",
-      trend: "down",
-    },
-    3: {
-      phase: "baseline",
-      title: "Problem Identification",
-      trend: "down",
-    },
-    4: {
-      phase: "planning",
-      title: "Intervention Planning Phase",
-      trend: "down",
-    },
-    5: {
-      phase: "planning",
-      title: "Resource Allocation",
-      trend: "down",
-    },
-    6: {
-      phase: "planning",
-      title: "Early Implementation Preparation",
-      trend: "up",
-    },
-
-    // Months 7-18: Early intervention
-    7: {
-      phase: "early",
-      title: "Initial Intervention Deployment",
-      trend: "up",
-    },
-    12: {
-      phase: "early",
-      title: "First Quarter Results",
-      trend: "up",
-    },
-    18: {
-      phase: "early",
-      title: "Early Positive Indicators",
-      trend: "up",
-    },
-
-    // Months 19-30: Accelerated progress
-    24: {
-      phase: "accelerated",
-      title: "Significant Improvement Phase",
-      trend: "up",
-    },
-    30: {
-      phase: "accelerated",
-      title: "Sustained Positive Trends",
-      trend: "up",
-    },
-
-    // Months 31-36: Transformation
-    33: {
-      phase: "transformation",
-      title: "Educational Transformation",
-      trend: "up",
-    },
-    36: {
-      phase: "transformation",
-      title: "Comprehensive Success",
-      trend: "up",
-    },
-  };
-
-  // Find the closest narrative phase
-  let selectedPhase: PhaseData = narrativePhases[1];
-  for (const [phaseMonth, phase] of Object.entries(narrativePhases)) {
-    if (month >= parseInt(phaseMonth)) {
-      selectedPhase = phase;
-    }
-  }
-
-  const descriptions = {
-    baseline:
-      "High-intensity red zones dominate the landscape, indicating critical educational gaps requiring immediate intervention. Assessment reveals significant disparities in educational quality, infrastructure, and access across the province.",
-    planning:
-      "Strategic planning and resource mobilization phase shows continued challenges while preparing comprehensive intervention strategies. Initial groundwork being laid for systematic educational improvements.",
-    early:
-      "First signs of improvement emerge as targeted interventions begin implementation. Orange and yellow zones start appearing, indicating early positive responses to educational reforms and infrastructure development.",
-    accelerated:
-      "Notable progress accelerates across multiple districts with expanding yellow and light green zones. Community engagement programs and digital learning initiatives show measurable positive impact on educational outcomes.",
-    transformation:
-      "Remarkable transformation with predominantly green zones indicating successful intervention outcomes. Comprehensive improvements in educational quality, accessibility, and equity demonstrate the lasting impact of sustained reform efforts.",
-  };
-
-  return {
-    title: selectedPhase.title,
-    description: descriptions[selectedPhase.phase as keyof typeof descriptions],
-    trend: selectedPhase.trend,
-    year,
-    monthName,
-  };
-};
-
-const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
+const ProvinceDetailMap = ({ provinceName }: ProvinceDetailMapProps) => {
+  const { currentMonth, isMapReady, setIsMapReady } = useProvinceStore();
   const [provinceGapScores, setProvinceGapScores] = useState<
     Record<string, number>
   >({});
@@ -451,9 +307,6 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
   const [mapLoading, setMapLoading] = useState(true);
   const [mapCenter, setMapCenter] = useState<[number, number]>([-2.5, 118]);
   const [mapZoom, setMapZoom] = useState<number>(7);
-  const [isMapReady, setIsMapReady] = useState(false);
-  const [currentMonth, setCurrentMonth] = useState<number>(36); // Start at month 36 (Dec 2024)
-  const [intensityMultiplier, setIntensityMultiplier] = useState<number>(1); // Intensity multiplier
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -472,7 +325,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
         setMapCenter(center);
 
         if (filteredData[0].properties?.provinsi == provinceName) {
-          setMapZoom(10);
+          setMapZoom(11);
         } else {
           setMapZoom(5);
         }
@@ -484,13 +337,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
   }, [provinceName]);
 
   // Use the time-series heatmap hook
-  useTimeSeriesHeatmap(
-    mapRef,
-    geoJsonData,
-    isMapReady,
-    currentMonth,
-    intensityMultiplier
-  );
+  useTimeSeriesHeatmap(mapRef, geoJsonData, isMapReady, currentMonth);
 
   const onEachFeature = (feature: Feature, layer: any) => {
     const properties = feature.properties as ProvinceProperties;
@@ -525,113 +372,10 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
     );
   };
 
-  const currentNarration = getMonthlyNarration(currentMonth);
-
   return (
     <>
       {geoJsonData && (
         <div className="space-y-6">
-          {/* Time Series Controls */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <Calendar className="w-5 h-5 text-blue-600" />
-              <h3 className="text-lg font-semibold text-gray-900">
-                Educational Intervention Timeline: {provinceName}
-              </h3>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-medium text-gray-700">
-                  Timeline: {currentNarration.monthName} {currentNarration.year}
-                </label>
-                <div className="text-sm text-gray-600">
-                  {currentMonth === 1
-                    ? "Baseline"
-                    : `Month ${currentMonth} of intervention`}
-                </div>
-              </div>
-
-              <Slider
-                value={[currentMonth]}
-                onValueChange={(value) => setCurrentMonth(value[0])}
-                min={1}
-                max={36}
-                step={1}
-                className="w-full"
-              />
-
-              <div className="flex justify-between text-xs text-gray-500">
-                <span>Jan 2022</span>
-                <span>2022</span>
-                <span>2023</span>
-                <span>2024</span>
-                <span>Dec 2024</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Intensity Controls */}
-          <div className="bg-white p-6 rounded-lg border shadow-sm">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-green-500 rounded-full"></div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Heatmap Intensity Controls
-              </h3>
-            </div>
-
-            <div className="flex items-center gap-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setIntensityMultiplier(
-                    Math.max(0.1, intensityMultiplier - 2)
-                  )
-                }
-                disabled={intensityMultiplier <= 0.1}
-              >
-                <Minus className="w-4 h-4 mr-1" />
-                Decrease
-              </Button>
-
-              <div className="flex-1 text-center">
-                <div className="text-sm font-medium text-gray-700">
-                  Intensity Multiplier: {intensityMultiplier.toFixed(1)}x
-                </div>
-                <div className="text-xs text-gray-500">
-                  {intensityMultiplier < 1
-                    ? "Lower intensity (more green)"
-                    : intensityMultiplier > 1
-                    ? "Higher intensity (more red)"
-                    : "Normal intensity"}
-                </div>
-              </div>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  setIntensityMultiplier( intensityMultiplier + 2)
-                }
-                // disabled={intensityMultiplier >= 3}
-              >
-                <Plus className="w-4 h-4 mr-1" />
-                Increase
-              </Button>
-            </div>
-
-            <div className="mt-3 flex justify-center">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIntensityMultiplier(1)}
-              >
-                Reset to Normal
-              </Button>
-            </div>
-          </div>
-
           {/* Map Container */}
           <div className="relative">
             {/* Heatmap Legend */}
@@ -660,9 +404,8 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
-
               <GeoJSON
-                key="provinces"
+                key={`provinces-${currentMonth}`}
                 data={geoJsonData}
                 style={{
                   fillColor: "rgb(0,0,0)",
@@ -675,34 +418,6 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
                 onEachFeature={onEachFeature}
               />
             </MapContainer>
-          </div>
-
-          {/* Yearly Narration */}
-          <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-lg border border-blue-200">
-            <div className="flex items-start gap-4">
-              <div
-                className={`p-2 rounded-lg ${
-                  currentNarration.trend === "up"
-                    ? "bg-green-100"
-                    : "bg-red-100"
-                }`}
-              >
-                {currentNarration.trend === "up" ? (
-                  <TrendingUp className="w-5 h-5 text-green-600" />
-                ) : (
-                  <TrendingDown className="w-5 h-5 text-red-600" />
-                )}
-              </div>
-              <div>
-                <h3 className="text-xl font-bold text-blue-900 mb-3">
-                  {currentNarration.monthName} {currentNarration.year}:{" "}
-                  {currentNarration.title}
-                </h3>
-                <p className="text-blue-800 leading-relaxed">
-                  {currentNarration.description}
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       )}

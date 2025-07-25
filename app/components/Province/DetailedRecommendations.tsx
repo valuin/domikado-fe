@@ -72,7 +72,7 @@ export default function DetailedRecommendations({
                     : rec.aspect === "Infrastruktur"
                     ? "35.0%"
                     : "20.0%"}{" "}
-                  of total budget
+                  of total budget (Rp 28.9T)
                 </p>
               </div>
 
