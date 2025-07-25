@@ -1,6 +1,5 @@
 import React from "react";
-import { Card, CardContent } from "@/app/components/ui/card";
-import { Target, TrendingUp, ArrowUp } from "lucide-react";
+import { TrendingUp, ArrowUp } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 import { TeacherChart } from "../Dashboard/TeacherChart";
 import { SchoolsBreakdown } from "../Dashboard/SchoolsBreakdown";

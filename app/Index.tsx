@@ -95,7 +95,7 @@ const Index = ({ data }: { data: ProvinceData }) => {
     "educator-workforce": "Teaching Staff Index",
   };
 
-  console.log(data);
+  
 
   return (
     <div className="min-h-screen ">
@@ -159,7 +159,7 @@ const Index = ({ data }: { data: ProvinceData }) => {
                 </div>
               ))}
             </div>
-            <TeacherChart />
+            <TeacherChart provinceData={data} />
 
             <SchoolsBreakdown />
           </div>

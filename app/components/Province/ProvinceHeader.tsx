@@ -1,7 +1,14 @@
 import React from "react";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { ArrowLeft, MapPin, Users, School, GraduationCap, DollarSign } from "lucide-react";
+import {
+  ArrowLeft,
+  MapPin,
+  Users,
+  School,
+  GraduationCap,
+  DollarSign,
+} from "lucide-react";
 
 interface ProvinceHeaderProps {
   provinceData: {
@@ -16,7 +23,10 @@ interface ProvinceHeaderProps {
   onBackClick: () => void;
 }
 
-const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({ provinceData, onBackClick }) => {
+const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({
+  provinceData,
+  onBackClick,
+}) => {
   return (
     <>
       {/* Header */}
@@ -39,15 +49,9 @@ const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({ provinceData, onBackCli
                   <h1 className="text-2xl font-bold text-foreground">
                     {provinceData.name}
                   </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Provinsi • Peringkat #{provinceData.ranking} Nasional
-                  </p>
                 </div>
               </div>
             </div>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              Skor Gap: {provinceData.gapScore}/100
-            </Badge>
           </div>
         </div>
       </div>

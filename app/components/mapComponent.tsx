@@ -26,11 +26,8 @@ export default function MapComponent() {
   const [provinceGapScores, setProvinceGapScores] = useState<
     Record<string, number>
   >({});
-  const [cityGapScores, setCityGapScores] = useState<Record<string, number>>(
-    {}
-  );
+
   const mapRef = useRef<any>(null);
-  const router = useRouter();
 
   const gapScores = [
     0.25, 0.28, 0.32, 0.35, 0.9, 0.82, 0.45, 0.48, 0.52, 0.55, 0.58, 0.62, 0.65,
@@ -57,7 +54,6 @@ export default function MapComponent() {
 
         setGeoJsonData(data);
         setMapLoading(false);
-        
       })
       .catch((error) => {
         console.error("Error loading map data:", error);
@@ -183,7 +179,6 @@ export default function MapComponent() {
             scrollWheelZoom={true}
             className={`rounded-lg relative`}
             ref={mapRef}
-            
           >
             <TileLayer
               attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

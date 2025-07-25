@@ -180,7 +180,7 @@ const generateTimeSeriesHeatmapPoints = (
     const locationVariance = (seededRandom() - 0.5) * 100; // ±50 variation
     const intensity = Math.max(100, baseIntensity + locationVariance); // Minimum 100
 
-    console.log(intensity)
+    console.log(intensity);
     return [lat, lng, intensity] as [number, number, number];
   });
 };
@@ -228,11 +228,6 @@ const useTimeSeriesHeatmap = (
       currentMonth,
       fixedLocationsRef.current
     );
-
-    if (heatmapPoints.length === 0) {
-      console.log("No valid heatmap points generated");
-      return;
-    }
 
     // Debug: Log intensity values for current month
     const intensities = heatmapPoints.map((point) => point[2]);
@@ -589,7 +584,6 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
               className={`rounded-lg relative`}
               ref={mapRef}
               whenReady={() => {
-                console.log("Map is ready for heatmap");
                 setIsMapReady(true);
               }}
             >
