@@ -74,17 +74,17 @@ const ProvincePage = () => {
   const currentSituationData = {
     kpiMetrics: [
       {
-        title: "Skor PISA Matematika",
-        value: 385,
-        max: 600,
+        title: "Angka Partisipasi Sekolah",
+        value: "75%",
+        target: "100%",
         status: "warning",
-        trend: "+2.1%",
+        trend: "+0.3%",
       },
       {
-        title: "Rasio Guru-Siswa",
-        value: "1:18",
-        target: "1:16",
-        status: "warning",
+        title: "Tingkat Penyelesaian Pendidikan",
+        value: "78%",
+        target: "100%",
+        status: "good",
         trend: "+0.3%",
       },
       {
@@ -95,9 +95,9 @@ const ProvincePage = () => {
         trend: "+1.2%",
       },
       {
-        title: "Angka Partisipasi",
-        value: "98.7%",
-        target: "99%",
+        title: "Indeks Pembangunan Manusia",
+        value: "73.4%",
+        target: "100%",
         status: "good",
         trend: "+0.8%",
       },
