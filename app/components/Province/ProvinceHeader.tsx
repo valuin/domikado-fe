@@ -41,7 +41,7 @@ const ProvinceHeader: React.FC<ProvinceHeaderProps> = ({
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Kembali
+                Back
               </Button>
               <div className="flex items-center gap-3">
                 <MapPin className="w-6 h-6 text-primary" />

@@ -10,6 +10,7 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import { useProvinceStore } from "@/app/store/provinceStore";
+import confetti from "canvas-confetti";
 
 // Monthly narration data for 5 years (60 months)
 const getMonthlyNarration = (
@@ -94,15 +95,15 @@ const getMonthlyNarration = (
 
   const descriptions = {
     planning:
-      "Initial phase focuses on strategic planning, resource allocation, and community engagement. The heatmap shows dark orange, indicating the significant challenges ahead.",
+      "Baseline: 42 % of teachers lack digital-pedagogy certification and 38 % of students are below minimum reading proficiency. Planning allocates 1,200 micro-grants for teacher upskilling and 15 mobile STEM labs to target the highest-deficit districts shown in dark orange.",
     early:
-      "Targeted interventions are rolled out. The heatmap begins to shift towards lighter orange and yellow, reflecting early positive changes and improvements in key areas.",
+      "After 3 months: 18 % of teachers have earned certification (+760 teachers). Reading proficiency gains lift 2,300 students above the minimum threshold. Mobile labs reach 4,500 students; early metrics shift heat zones from dark orange to yellow.",
     accelerated:
-      "Successful programs are scaled up, leading to widespread improvements. The heatmap shows a clear transition to yellow and light green, indicating significant progress.",
+      "Month 12: 68 % teacher certification achieved (additional 1,150 teachers). Skill-deficit gap shrinks to 15 %. Grade-level reading proficiency rises to 74 % (+8,100 students). Heatmap transitions to light green as the province moves from bottom-quartile to mid-tier nationally.",
     transformation:
-      "The educational landscape is fundamentally transformed. The heatmap is now predominantly light green, with pockets of dark green emerging as a result of deep and sustained impact.",
+      "Month 24: 85 % of teachers certified; digital-skills deficit eliminated. Grade-level literacy reaches 91 % (additional 12,400 students). Province now ranks top-15 nationwide; heatmap shows dark-green clusters in all but two districts.",
     sustainability:
-      "Focus shifts to ensuring long-term success and sustainability of the interventions. The heatmap is now a vibrant green, symbolizing a resilient and thriving educational ecosystem.",
+      "Month 36: 92 % sustained certification rate; zero districts remain in critical deficit. Literacy stabilises at 94 %; STEM-lab usage averages 4.8 hrs/week. Heatmap is vibrant green, signalling a resilient talent pipeline ready for the 2030 knowledge economy.",
   };
 
   return {
@@ -123,6 +124,17 @@ export const InterventionTimelineSection: React.FC<InterventionTimelineSectionPr
 }) => {
   const { currentMonth, setCurrentMonth } = useProvinceStore();
   const currentNarration = getMonthlyNarration(currentMonth);
+
+  React.useEffect(() => {
+    if (currentMonth === 21) {
+      confetti({
+        particleCount: 200,
+        spread: 90,
+        origin: { y: 0.6 },
+        colors: ['#22c55e', '#16a34a', '#15803d'],
+      });
+    }
+  }, [currentMonth]);
 
   return (
     <div className="space-y-6">

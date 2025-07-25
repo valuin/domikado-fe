@@ -2,11 +2,12 @@
 import React from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from "@/app/components/ui/tabs";
+  Stepper,
+  StepperIndicator,
+  StepperItem,
+  StepperSeparator,
+  StepperTrigger,
+} from "@/app/components/ui/stepper";
 import ProvinceHeader from "@/app/components/Province/ProvinceHeader";
 import CurrentSituationSection from "@/app/components/Province/CurrentSituationSection";
 import InterventionRecommendationsSection from "@/app/components/Province/InterventionRecommendationsSection";
@@ -16,6 +17,7 @@ const ProvinceDetailMap = dynamic(
   () => import("@/app/components/Province/ProvinceDetailMap"),
   { ssr: false }
 );
+
 import InterventionTimelineSection from "@/app/components/Province/InterventionTimelineSection";
 import { Users, Heart, Building } from "lucide-react";
 import { useProvince } from "@/app/hooks/use-province";
@@ -124,7 +126,7 @@ const ProvincePage = () => {
         ],
         targets: [
           "Rasio guru-siswa optimal (1:16) dalam 2 tahun",
-          "100% guru tersertifikasi dalam 3 tahun",
+          "100% guru tersertifikasi dalam 3 years",
           "Kompetensi digital guru meningkat 40%",
         ],
       },
@@ -190,48 +192,93 @@ const ProvincePage = () => {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
+        <Stepper
+          defaultValue={1} // Default to the first step
+          value={
+            activeTab === "current"
+              ? 1
+              : activeTab === "recommendations"
+              ? 2
+              : 3
+          }
+          onValueChange={(value) => {
+            if (value === 1) setActiveTab("current");
+            else if (value === 2) setActiveTab("recommendations");
+            else if (value === 3) setActiveTab("timeline");
+          }}
+          className="space-y-6 mb-5"
         >
-          <TabsList className="grid w-full grid-cols-3 max-w-lg mx-auto">
-            <TabsTrigger value="current">Current Situation</TabsTrigger>
-            <TabsTrigger value="recommendations">
-              Funding Recommendation
-            </TabsTrigger>
-            <TabsTrigger value="timeline">Projected Impact</TabsTrigger>
-          </TabsList>
+          <div className="mx-auto max-w-7xl space-y-8 text-center">
+            <Stepper
+              defaultValue={1}
+              value={
+                activeTab === "current"
+                  ? 1
+                  : activeTab === "recommendations"
+                  ? 2
+                  : 3
+              }
+              onValueChange={(value) => {
+                if (value === 1) setActiveTab("current");
+                else if (value === 2) setActiveTab("recommendations");
+                else if (value === 3) setActiveTab("timeline");
+              }}
+              className="w-full"
+            >
+              <StepperItem key={1} step={1} className="not-last:flex-1">
+                <StepperTrigger>
+                  <StepperIndicator />
+                  Current Situation
+                </StepperTrigger>
+                <StepperSeparator />
+              </StepperItem>
+              <StepperItem key={2} step={2} className="not-last:flex-1">
+                <StepperTrigger>
+                  <StepperIndicator />
+                  Funding Recommendation
+                </StepperTrigger>
+                <StepperSeparator />
+              </StepperItem>
+              <StepperItem key={3} step={3} className="not-last:flex-1">
+                <StepperTrigger>
+                  <StepperIndicator />
+                  Projected Impact
+                </StepperTrigger>
+              </StepperItem>
+            </Stepper>
+          </div>
+        </Stepper>
 
-          {/* Tab 1: Current Situations */}
-          <TabsContent value="current" className="space-y-8">
-            <CurrentSituationSection
-              interventionData={interventionData}
-              estimatedBudget={provinceData.estimatedBudget}
-              provinceData={data}
-            />
-          </TabsContent>
+        {/* Content for Stepper Item 1: Current Situations */}
+        {activeTab === "current" && (
+          <CurrentSituationSection
+            interventionData={interventionData}
+            estimatedBudget={provinceData.estimatedBudget}
+            provinceData={data}
+          />
+        )}
 
-          {/* Tab 2: Intervention Recommendations */}
-          <TabsContent value="recommendations" className="space-y-8">
-            <InterventionRecommendationsSection
-              interventionData={interventionData}
-              estimatedBudget={provinceData.estimatedBudget}
-              provinceName={provinceName}
-              provinceData={data}
-            />
-          </TabsContent>
+        {/* Content for Stepper Item 2: Intervention Recommendations */}
+        {activeTab === "recommendations" && (
+          <InterventionRecommendationsSection
+            interventionData={interventionData}
+            estimatedBudget={provinceData.estimatedBudget}
+            provinceName={provinceName}
+            provinceData={data}
+          />
+        )}
 
-          {/* Tab 3: Intervention Timeline (now includes map) */}
-          <TabsContent value="timeline" className="space-y-8">
+        {/* Content for Stepper Item 3: Intervention Timeline (now includes map) */}
+        {activeTab === "timeline" && (
+          <div className="space-y-8">
             <ProvinceDetailMap
               provinceName={provinceName}
             />
             <InterventionTimelineSection
               provinceName={provinceName}
             />
-          </TabsContent>
-        </Tabs>
+          </div>
+        )}
       </div>
     </div>
   );
