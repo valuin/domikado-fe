@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "EduQuity",
+  title: "EdQuity",
   description: "Indonesia Education Equity Dashboard",
 };
 
