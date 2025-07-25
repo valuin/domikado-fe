@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Card,
   CardContent,
@@ -5,22 +6,53 @@ import {
   CardTitle,
 } from "@/app/components/ui/card";
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@/app/components/ui/accordion";
-import {
-  GraduationCap,
-  BookOpen,
-  Building2,
-  Users,
-  Target,
-  AlertTriangle,
-  CheckCircle,
-} from "lucide-react";
+  ClientTooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/app/components/ui/d3-tooltip";
+import * as d3 from "d3";
+import { GraduationCap, BookOpen } from "lucide-react";
 
-const schoolData = [
+interface ExtendedHierarchyNode<T> extends d3.HierarchyNode<T> {
+  x0: number;
+  x1: number;
+  y0: number;
+  y1: number;
+}
+
+type Subtopic = {
+  name: string; // Changed from 'type' to 'name'
+  value: number;
+  description: string;
+};
+
+type SchoolTopic = {
+  name: string;
+  totalValue: number;
+  totalPercentage: number;
+  color: string;
+  teachers: number;
+  students: number;
+  ratio: number;
+  breakdown: Subtopic[];
+};
+
+type HierarchyData = {
+  name: string;
+  value?: number; // Make value optional for non-leaf nodes
+  color?: string;
+  description?: string; // Add description for leaf nodes
+  children?: {
+    name: string;
+    color?: string;
+    ratio?: number; // Add ratio to parent data
+    teachers?: number; // Add teachers to parent data
+    students?: number; // Add students to parent data
+    children: Subtopic[];
+  }[];
+};
+
+const schoolData: SchoolTopic[] = [
   {
     name: "Elementary Schools (SD)",
     totalValue: 148420,
@@ -31,21 +63,18 @@ const schoolData = [
     ratio: 20.8,
     breakdown: [
       {
-        type: "Public Elementary",
-        value: 132456,
-        percentage: 89.3,
+        name: "Public Elementary",
+        value: 82457,
         description: "Government-run elementary schools",
       },
       {
-        type: "Private Elementary",
-        value: 14964,
-        percentage: 10.1,
+        name: "Private Elementary",
+        value: 17964,
         description: "Private elementary schools",
       },
       {
-        type: "Special Education",
-        value: 1000,
-        percentage: 0.6,
+        name: "Special Education",
+        value: 5000,
         description: "Schools for children with special needs",
       },
     ],
@@ -60,15 +89,13 @@ const schoolData = [
     ratio: 14.1,
     breakdown: [
       {
-        type: "Public Junior High",
+        name: "Public Junior High",
         value: 32461,
-        percentage: 80.0,
         description: "Government-run junior high schools",
       },
       {
-        type: "Private Junior High",
+        name: "Private Junior High",
         value: 8115,
-        percentage: 20.0,
         description: "Private junior high schools",
       },
     ],
@@ -83,15 +110,13 @@ const schoolData = [
     ratio: 12.3,
     breakdown: [
       {
-        type: "Public Senior High",
+        name: "Public Senior High",
         value: 20122,
-        percentage: 70.0,
         description: "Government-run senior high schools",
       },
       {
-        type: "Private Senior High",
+        name: "Private Senior High",
         value: 8623,
-        percentage: 30.0,
         description: "Private senior high schools",
       },
     ],
@@ -106,15 +131,13 @@ const schoolData = [
     ratio: 12.8,
     breakdown: [
       {
-        type: "Public Vocational",
+        name: "Public Vocational",
         value: 8700,
-        percentage: 60.0,
         description: "Government-run vocational schools",
       },
       {
-        type: "Private Vocational",
+        name: "Private Vocational",
         value: 5800,
-        percentage: 40.0,
         description: "Private vocational schools",
       },
     ],
@@ -122,6 +145,85 @@ const schoolData = [
 ];
 
 const totalSchools = schoolData.reduce((sum, item) => sum + item.totalValue, 0);
+
+const VISIBLE_TEXT_WIDTH = 10;
+const VISIBLE_TEXT_HEIGHT = 10;
+
+interface TreemapChartProps {
+  data: SchoolTopic[];
+}
+
+export function TreemapChart({ data: rawData }: TreemapChartProps) {
+  const data: HierarchyData = {
+    name: "root",
+    value: 0,
+    children: rawData.map((topic) => ({
+      name: topic.name,
+      color: topic.color,
+      ratio: topic.ratio, // Include ratio
+      teachers: topic.teachers, // Include teachers
+      students: topic.students, // Include students
+      children: topic.breakdown.map((sub) => ({
+        name: sub.name,
+        value: sub.value,
+        description: sub.description,
+      })),
+    })),
+  };
+
+  const root = d3
+    .hierarchy(data)
+    .sum((d) => d.value || 0)
+    .sort((a, b) => (b.value || 0) - (a.value || 0));
+
+  d3.treemap<HierarchyData>()
+    .size([100, 100])
+    .paddingInner(0.75)
+    .paddingOuter(1)
+    .round(false)(root);
+
+  const leaves = root.leaves() as ExtendedHierarchyNode<HierarchyData>[];
+
+  const colorScale = d3
+    .scaleOrdinal<string, string>()
+    .domain(rawData.map((d) => d.name))
+    .range(rawData.map((d) => d.color));
+
+  return (
+    <ClientTooltip>
+      <div className="relative w-full h-[250px]">
+        {leaves.map((leaf, i) => {
+          const leafWidth = leaf.x1 - leaf.x0;
+          const leafHeight = leaf.y1 - leaf.y0;
+          const parentColor = colorScale(leaf.parent?.data.name || "") as string;
+
+          return (
+            <TooltipTrigger key={i} data={leaf}>
+              <div
+                className="absolute rounded-md p-0.5 box-border flex justify-center items-center"
+                style={{
+                  left: `${leaf.x0}%`,
+                  top: `${leaf.y0}%`,
+                  width: `${leafWidth}%`,
+                  height: `${leafHeight}%`,
+                  backgroundColor: parentColor,
+                }}
+              >
+                {leafWidth > VISIBLE_TEXT_WIDTH &&
+                  leafHeight > VISIBLE_TEXT_HEIGHT && (
+                    <span className="text-white text-xs font-medium text-center">
+                      {leaf.data.name}
+                    </span>
+                  )}
+              </div>
+            </TooltipTrigger>
+          );
+        })}
+        <TooltipContent />
+      </div>
+    </ClientTooltip>
+  );
+}
 
 export const SchoolsBreakdown = () => {
   return (
@@ -132,170 +234,32 @@ export const SchoolsBreakdown = () => {
           School Breakdown by Type
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Detailed distribution of {totalSchools.toLocaleString()} schools
+          Detailed distribution of {totalSchools.toLocaleString('en-US')} schools
           across Indonesia (2024)
         </p>
       </CardHeader>
       <CardContent>
-        <Accordion type="single" collapsible className="w-full">
-          {schoolData.map((item, index) => {
-            const isGoodRatio = item.ratio <= 16;
-            const ratioStatus = isGoodRatio ? "Good" : "Needs Improvement";
-            const ratioColor = isGoodRatio ? "text-success" : "text-warning";
+        <TreemapChart data={schoolData} />
 
-            return (
-              <AccordionItem key={index} value={`item-${index}`}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center  justify-between w-full pr-4">
-                    <div className="flex items-center space-x-3">
-                      <div
-                        className="w-4 h-4 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <div className="text-left">
-                        <div className="font-medium text-sm">{item.name}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {item.totalValue.toLocaleString()} schools (
-                          {item.totalPercentage}%)
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="text-right">
-                        <div className="font-semibold text-sm">
-                          {item.totalPercentage}%
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-3 pt-2">
-                    {item.breakdown.map((subItem, subIndex) => (
-                      <div
-                        key={subIndex}
-                        className="flex items-center justify-between p-3 bg-gradient-to-r from-muted/30 to-transparent rounded-lg border border-muted/20 ml-5"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="flex items-center space-x-2">
-                            <Building2 className="w-3 h-3 text-muted-foreground" />
-                            <div>
-                              <div className="font-medium text-sm">
-                                {subItem.type}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {subItem.description}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-sm">
-                            {subItem.value.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {subItem.percentage}%
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-
-                    {/* Teacher-Student Ratio for this category */}
-                    <div className="mt-4 p-3 bg-accent/5 rounded-lg border border-accent/10">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2">
-                          <Target className="w-4 h-4 text-accent" />
-                          <span className="text-sm font-medium text-accent">
-                            Teacher-Student Ratio for {item.name}
-                          </span>
-                        </div>
-                        <div
-                          className={`flex items-center space-x-2 ${ratioColor}`}
-                        >
-                          {isGoodRatio ? (
-                            <CheckCircle className="w-3 h-3" />
-                          ) : (
-                            <AlertTriangle className="w-3 h-3" />
-                          )}
-                          <span className="text-xs font-medium">
-                            {ratioStatus}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2 text-center">
-                        <div>
-                          <div className="text-sm font-semibold text-accent">
-                            {item.teachers.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Teachers
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-accent">
-                            {item.students.toLocaleString()}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Students
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm font-semibold text-accent">
-                            1:{item.ratio}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Ratio
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Summary for this category */}
-                    <div className="mt-4 p-3 bg-primary/5 rounded-lg border border-primary/10">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Users className="w-4 h-4 text-primary" />
-                          <span className="text-sm font-medium text-primary">
-                            {item.name} Summary
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <div className="text-sm font-semibold">
-                            {item.totalValue.toLocaleString()} schools
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {item.totalPercentage}% of total
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            );
-          })}
-        </Accordion>
-
-        {/* Overall summary */}
-        <div className="mt-6 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-primary/10">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <BookOpen className="w-5 h-5 text-primary" />
-              <span className="font-semibold text-primary">
-                Total Schools in Indonesia
-              </span>
-            </div>
-            <div className="text-right">
-              <div className="text-xl font-bold text-primary">
-                {totalSchools.toLocaleString()}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Across all education levels
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  );
+       <div className="mt-6 p-4 bg-gradient-to-r from-primary/5 to-accent/5 rounded-lg border border-primary/10">
+         <div className="flex items-center justify-between">
+           <div className="flex items-center space-x-2">
+             <BookOpen className="w-5 h-5 text-primary" />
+             <span className="font-semibold text-primary">
+               Total Schools in Indonesia
+             </span>
+           </div>
+           <div className="text-right">
+             <div className="text-xl font-bold text-primary">
+               {totalSchools.toLocaleString('en-US')}
+             </div>
+             <div className="text-sm text-muted-foreground">
+               Across all education levels
+             </div>
+           </div>
+         </div>
+       </div>
+     </CardContent>
+   </Card>
+ );
 };
