@@ -1,7 +1,4 @@
-import { useState } from "react";
-import { Button } from "@/app/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/app/components/ui/sheet";
-import { Menu, BarChart3, Users, Building2, Coins } from "lucide-react";
+import { BarChart3 } from "lucide-react";
 
 interface HeaderProps {
   selectedIndex: string;
@@ -18,9 +15,7 @@ export const Header = () => {
             <div className="h-8 w-8 bg-primary rounded-lg flex items-center justify-center">
               <BarChart3 className="h-5 w-5 text-primary-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">
-              EdQuity
-            </span>
+            <span className="text-xl font-bold text-foreground">EdQuity</span>
           </div>
         </div>
       </div>

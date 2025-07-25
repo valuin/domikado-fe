@@ -39,7 +39,6 @@ const ProvincePage = () => {
     (province) => province.name.toLowerCase() === provinceName.toLowerCase()
   );
 
-  // Fetch data if province exists in providedData, otherwise use null
   const { data, isLoading } = useProvince({
     provinceId: matchingProvince?.id,
   });
@@ -47,18 +46,15 @@ const ProvincePage = () => {
   console.log("Province data:", data);
   console.log("Matching province:", matchingProvince);
 
-  // Use real data if available, otherwise fallback to placeholder data
   const provinceData = {
     name: data?.provinces?.name || provinceName,
-    population: "48.2 juta", // Placeholder - not in API
     totalStudents: data?.total?.students?.toLocaleString() || "12.1 juta",
     totalTeachers: data?.total?.teachers?.toLocaleString() || "485.000",
     totalSchools: data?.total?.schools?.toLocaleString() || "45.230",
     educationBudget: data?.funding
       ? `Rp ${(data.funding / 1e12).toFixed(1)}T`
-      : "Rp 12.3T",
+      : "Rp 4.3T",
     gapScore: (data as any)?.gap_score || 72,
-    ranking: 5, // Placeholder - not in API
     literacy: data?.social?.literacy_rate || 96.4,
     enrollment: data?.social?.school_participation_rate || 98.7,
     budgetAllocation: [
@@ -197,7 +193,7 @@ const ProvincePage = () => {
           <TabsContent value="current" className="space-y-8">
             <CurrentSituationSection
               interventionData={interventionData}
-              estimatedBudget={provinceData.estimatedBudget}
+              currentBudget={provinceData.educationBudget}
               provinceData={data}
             />
           </TabsContent>

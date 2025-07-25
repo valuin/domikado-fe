@@ -3,7 +3,8 @@ import { FeatureCollection, Feature } from "geojson";
 import { useEffect, useState, useRef } from "react";
 import { MapContainer, TileLayer, GeoJSON } from "react-leaflet";
 import { Slider } from "@/app/components/ui/slider";
-import { Calendar, TrendingDown, TrendingUp } from "lucide-react";
+import { Button } from "@/app/components/ui/button";
+import { Calendar, TrendingDown, TrendingUp, Plus, Minus } from "lucide-react";
 import L from "leaflet";
 import "leaflet.heat";
 
@@ -156,20 +157,16 @@ const generateFixedLocations = (
 const generateTimeSeriesHeatmapPoints = (
   feature: Feature,
   month: number,
-  fixedLocations?: [number, number][]
+  fixedLocations?: [number, number][],
+  intensityMultiplier: number = 1
 ): [number, number, number][] => {
-  // Generate fixed locations if not provided
   const locations = fixedLocations || generateFixedLocations(feature, 45);
 
-  // Get month-specific intensity parameters
   const { base, variance } = getMonthlyIntensityMultiplier(month);
 
-  // Apply time-varying intensity to fixed locations
   return locations.map(([lat, lng], index) => {
-    // Calculate intensity that decreases by 200 each month, starting from 5000
     const baseIntensity = 5000 - (month - 1) * 200;
 
-    // Add some location-specific variation (±50) for visual variety
     const locationSeed = 12345 + index * 67;
     let seedValue = locationSeed;
     const seededRandom = () => {
@@ -178,9 +175,11 @@ const generateTimeSeriesHeatmapPoints = (
     };
 
     const locationVariance = (seededRandom() - 0.5) * 100; // ±50 variation
-    const intensity = Math.max(100, baseIntensity + locationVariance); // Minimum 100
+    const intensity = Math.max(
+      100,
+      (baseIntensity + locationVariance) * intensityMultiplier
+    ); // Apply multiplier
 
-    console.log(intensity);
     return [lat, lng, intensity] as [number, number, number];
   });
 };
@@ -190,7 +189,8 @@ const useTimeSeriesHeatmap = (
   mapRef: React.RefObject<any>,
   provinceData: FeatureCollection | null,
   isMapReady: boolean,
-  currentMonth: number
+  currentMonth: number,
+  intensityMultiplier: number
 ) => {
   const heatLayerRef = useRef<any>(null);
   const fixedLocationsRef = useRef<[number, number][] | null>(null);
@@ -226,7 +226,8 @@ const useTimeSeriesHeatmap = (
     const heatmapPoints = generateTimeSeriesHeatmapPoints(
       provinceFeature,
       currentMonth,
-      fixedLocationsRef.current
+      fixedLocationsRef.current,
+      intensityMultiplier
     );
 
     // Debug: Log intensity values for current month
@@ -288,7 +289,7 @@ const useTimeSeriesHeatmap = (
         }
       }
     };
-  }, [mapRef, provinceData, isMapReady, currentMonth]);
+  }, [mapRef, provinceData, isMapReady, currentMonth, intensityMultiplier]);
 
   return heatLayerRef.current;
 };
@@ -452,6 +453,7 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
   const [mapZoom, setMapZoom] = useState<number>(7);
   const [isMapReady, setIsMapReady] = useState(false);
   const [currentMonth, setCurrentMonth] = useState<number>(36); // Start at month 36 (Dec 2024)
+  const [intensityMultiplier, setIntensityMultiplier] = useState<number>(1); // Intensity multiplier
   const mapRef = useRef<any>(null);
 
   useEffect(() => {
@@ -482,7 +484,13 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
   }, [provinceName]);
 
   // Use the time-series heatmap hook
-  useTimeSeriesHeatmap(mapRef, geoJsonData, isMapReady, currentMonth);
+  useTimeSeriesHeatmap(
+    mapRef,
+    geoJsonData,
+    isMapReady,
+    currentMonth,
+    intensityMultiplier
+  );
 
   const onEachFeature = (feature: Feature, layer: any) => {
     const properties = feature.properties as ProvinceProperties;
@@ -560,6 +568,67 @@ const ProvinceDetailMap = ({ provinceName }: { provinceName: string }) => {
                 <span>2024</span>
                 <span>Dec 2024</span>
               </div>
+            </div>
+          </div>
+
+          {/* Intensity Controls */}
+          <div className="bg-white p-6 rounded-lg border shadow-sm">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-5 h-5 bg-gradient-to-r from-red-500 to-green-500 rounded-full"></div>
+              <h3 className="text-lg font-semibold text-gray-900">
+                Heatmap Intensity Controls
+              </h3>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setIntensityMultiplier(
+                    Math.max(0.1, intensityMultiplier - 2)
+                  )
+                }
+                disabled={intensityMultiplier <= 0.1}
+              >
+                <Minus className="w-4 h-4 mr-1" />
+                Decrease
+              </Button>
+
+              <div className="flex-1 text-center">
+                <div className="text-sm font-medium text-gray-700">
+                  Intensity Multiplier: {intensityMultiplier.toFixed(1)}x
+                </div>
+                <div className="text-xs text-gray-500">
+                  {intensityMultiplier < 1
+                    ? "Lower intensity (more green)"
+                    : intensityMultiplier > 1
+                    ? "Higher intensity (more red)"
+                    : "Normal intensity"}
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  setIntensityMultiplier( intensityMultiplier + 2)
+                }
+                // disabled={intensityMultiplier >= 3}
+              >
+                <Plus className="w-4 h-4 mr-1" />
+                Increase
+              </Button>
+            </div>
+
+            <div className="mt-3 flex justify-center">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIntensityMultiplier(1)}
+              >
+                Reset to Normal
+              </Button>
             </div>
           </div>
 
