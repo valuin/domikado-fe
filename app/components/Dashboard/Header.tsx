@@ -39,7 +39,7 @@ export const Header = ({ selectedIndex, onIndexChange }: HeaderProps) => {
   ];
 
   return (
-    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-border">
+    <header className="sticky top-0 z-1000 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60 border-b border-border">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
