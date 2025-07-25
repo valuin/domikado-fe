@@ -36,28 +36,28 @@ export default function DetailedRecommendations({
               </h4>
               <span
                 className={`px-3 py-1 rounded-full text-sm font-medium ${
-                  rec.aspect === "Teaching Staff"
+                  rec.aspect === "Tenaga Pendidik"
                     ? "bg-red-100 text-red-700"
-                    : rec.aspect === "Direct Assistance"
+                    : rec.aspect === "Infrastruktur"
                     ? "bg-yellow-100 text-yellow-700"
-                    : "bg-green-100 text-green-700"
+                    : "bg-orange-100 text-orange-700"
                 }`}
               >
-                {rec.aspect === "Teaching Staff"
+                {rec.aspect === "Tenaga Pendidik"
                   ? "High"
-                  : rec.aspect === "Direct Assistance"
+                  : rec.aspect === "Infrastruktur"
                   ? "Medium"
-                  : "Low"}{" "}
+                  : "Medium"}{" "}
                 Priority
               </span>
             </div>
 
             <p className="text-gray-700 mb-4">
-              {rec.aspect === "Teaching Staff"
-                ? "Improving quality and quantity of teaching staff to achieve optimal teacher-student ratios and enhance teaching competencies."
-                : rec.aspect === "Direct Assistance"
-                ? "Direct assistance programs to improve education access and reduce dropout rates in regions."
-                : "Development and improvement of digital infrastructure to support modern learning and technology access."}
+              {rec.aspect === "Tenaga Pendidik"
+                ? "Meningkatkan kualitas dan kuantitas tenaga pendidik untuk mencapai rasio guru-siswa optimal dan meningkatkan kompetensi mengajar."
+                : rec.aspect === "Infrastruktur"
+                ? "Pengembangan dan perbaikan infrastruktur fisik dan digital untuk mendukung pembelajaran modern dan akses teknologi."
+                : "Implementasi sistem manajemen anggaran yang cerdas dan transparan untuk optimasi penggunaan dana pendidikan."}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
@@ -67,11 +67,11 @@ export default function DetailedRecommendations({
                 </h5>
                 <p className="text-blue-800">{rec.budget}</p>
                 <p className="text-sm text-blue-600 mt-1">
-                  {rec.aspect === "Teaching Staff"
-                    ? "52.5%"
-                    : rec.aspect === "Direct Assistance"
-                    ? "25.2%"
-                    : "22.3%"}{" "}
+                  {rec.aspect === "Tenaga Pendidik"
+                    ? "45.0%"
+                    : rec.aspect === "Infrastruktur"
+                    ? "35.0%"
+                    : "20.0%"}{" "}
                   of total budget
                 </p>
               </div>

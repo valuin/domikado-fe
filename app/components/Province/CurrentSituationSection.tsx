@@ -7,12 +7,9 @@ import {
   PersonStanding,
   User,
   School,
-  Target,
-  Calculator,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { TeacherChart } from "../Dashboard/TeacherChart";
-import { SchoolsBreakdown } from "../Dashboard/SchoolsBreakdown";
+
 import RatioAnalysis from "./RatioAnalysis";
 
 import { ProvinceData } from "@/app/types/province";
@@ -20,6 +17,7 @@ import {
   calculateSchoolRequirements,
   calculateTeacherRequirements,
 } from "@/lib/utils";
+import BudgetCalculator from "../calculator";
 
 // Function to analyze gap score and provide description
 const analyzeGapScore = (gapScore: number) => {
@@ -112,7 +110,7 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
 }) => {
   const gapScore =
     provinceData?.province_id == "0b9fb40b-0533-4092-bc06-b4e8ce7c367e"
-      ? 54
+      ? 24
       : provinceData?.gap_score || 0;
 
   const teacherReq = calculateTeacherRequirements(provinceData!);
@@ -319,6 +317,8 @@ const CurrentSituationSection: React.FC<CurrentSituationSection> = ({
 
       {/* Ratio Analysis Section */}
       {provinceData && <RatioAnalysis provinceData={provinceData} />}
+
+      <BudgetCalculator />
 
       {/* General Data Section */}
       {/* <div className="grid grid-cols-2 gap-6">

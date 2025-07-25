@@ -10,7 +10,7 @@ import {
 import ProvinceHeader from "@/app/components/Province/ProvinceHeader";
 import CurrentSituationSection from "@/app/components/Province/CurrentSituationSection";
 import InterventionRecommendationsSection from "@/app/components/Province/InterventionRecommendationsSection";
-import { Users, Heart, Building } from "lucide-react";
+import { Users, Heart, Building, Calculator } from "lucide-react";
 import { useProvince } from "@/app/hooks/use-province";
 
 const providedData = [
@@ -79,21 +79,21 @@ const ProvincePage = () => {
     budgetRecommendation: [
       {
         name: "Tenaga Pendidik",
-        value: 52.5,
+        value: 45.0,
         color: "#3b82f6",
-        change: "+7.3%",
+        change: "+12.5%",
       },
       {
-        name: "Bantuan Langsung",
-        value: 25.2,
+        name: "Infrastruktur",
+        value: 35.0,
         color: "#10b981",
-        change: "+8.4%",
+        change: "+18.2%",
       },
       {
-        name: "Infrastruktur Digital",
-        value: 22.3,
+        name: "Smart Budget",
+        value: 20.0,
         color: "#f59e0b",
-        change: "+6.0%",
+        change: "+25.0%",
       },
     ],
     detailedRecommendations: [
@@ -102,53 +102,61 @@ const ProvincePage = () => {
         icon: Users,
         color: "text-blue-600",
         bgColor: "bg-blue-50",
-        budget: "Rp 6.4T (+15%)",
+        budget: "Rp 5.5T (+12.5%)",
         actions: [
-          "Rekrut 12.500 guru baru untuk mengurangi rasio menjadi 1:16",
-          "Program sertifikasi untuk 8.200 guru tidak tersertifikasi",
-          "Pelatihan digital untuk 25.000 guru",
-          "Peningkatan tunjangan guru daerah terpencil sebesar 25%",
+          "Rekrut 15.000 guru baru untuk mencapai rasio optimal 1:16",
+          "Program sertifikasi untuk 10.000 guru tidak tersertifikasi",
+          "Pelatihan digital dan pedagogi untuk 30.000 guru",
+          "Peningkatan tunjangan guru daerah terpencil sebesar 30%",
+          "Program mentoring guru senior untuk guru junior",
         ],
         targets: [
           "Rasio guru-siswa optimal (1:16) dalam 2 tahun",
           "100% guru tersertifikasi dalam 3 tahun",
-          "Kompetensi digital guru meningkat 40%",
+          "Kompetensi digital guru meningkat 50%",
+          "Retensi guru di daerah terpencil meningkat 40%",
         ],
       },
       {
-        aspect: "Bantuan Langsung",
-        icon: Heart,
+        aspect: "Infrastruktur",
+        icon: Building,
         color: "text-green-600",
         bgColor: "bg-green-50",
-        budget: "Rp 3.1T (+35%)",
+        budget: "Rp 4.3T (+18.2%)",
         actions: [
-          "Perluasan Program Indonesia Pintar untuk 450.000 siswa",
-          "Bantuan transportasi untuk siswa daerah terpencil",
-          "Program makan siang gratis untuk 280.000 siswa SD",
-          "Beasiswa prestasi untuk 15.000 siswa SMA/SMK",
-        ],
-        targets: [
-          "Angka putus sekolah turun menjadi <1%",
-          "Partisipasi pendidikan mencapai 99.5%",
-          "Kesenjangan akses pendidikan berkurang 60%",
-        ],
-      },
-      {
-        aspect: "Infrastruktur Digital",
-        icon: Building,
-        color: "text-orange-600",
-        bgColor: "bg-orange-50",
-        budget: "Rp 2.7T (+50%)",
-        actions: [
-          "Pembangunan 450 sekolah baru di daerah underserved",
-          "Renovasi 1.200 sekolah dengan standar nasional",
-          "Internet fiber untuk 2.800 sekolah",
-          "Laboratorium komputer untuk 800 SMP/SMA",
+          "Pembangunan 600 sekolah baru di daerah underserved",
+          "Renovasi 1.500 sekolah dengan standar nasional",
+          "Internet fiber dan WiFi untuk 3.500 sekolah",
+          "Laboratorium komputer dan sains untuk 1.000 sekolah",
+          "Pembangunan perpustakaan digital di 2.000 sekolah",
+          "Sistem keamanan dan CCTV di semua sekolah",
         ],
         targets: [
           "100% sekolah memiliki akses internet berkualitas",
-          "Rasio siswa per komputer menjadi 8:1",
-          "Semua kelas dilengkapi projector digital",
+          "Rasio siswa per komputer menjadi 6:1",
+          "Semua kelas dilengkapi projector dan smart board",
+          "100% sekolah memiliki perpustakaan digital",
+        ],
+      },
+      {
+        aspect: "Smart Budget",
+        icon: Calculator,
+        color: "text-orange-600",
+        bgColor: "bg-orange-50",
+        budget: "Rp 2.4T (+25.0%)",
+        actions: [
+          "Implementasi sistem monitoring anggaran real-time",
+          "Platform digital untuk transparansi pengeluaran",
+          "Analisis data untuk optimasi alokasi anggaran",
+          "Program efisiensi energi di 5.000 sekolah",
+          "Sistem procurement digital untuk penghematan 15%",
+          "Pelatihan manajemen keuangan untuk 2.000 kepala sekolah",
+        ],
+        targets: [
+          "Efisiensi anggaran meningkat 20%",
+          "Transparansi pengeluaran 100% real-time",
+          "Penghematan operasional 15% per tahun",
+          "Akuntabilitas keuangan mencapai 95%",
         ],
       },
     ],
